@@ -150,3 +150,25 @@ consulta) estão no `.gitignore`.
   anúncio não são simuladas: é como a Halfbrick monetiza o jogo.
 - `tools/thumbxref.pl` lista quem chama uma função do motor (direto ou pela
   PLT).
+
+## Gravação em segundo plano, vibração e teclado
+
+Os três ainda **não foram testados no hardware**.
+
+- **Saves (`dtm_saves.c`)**: `Mortar::IFile_Direct::Close` grava cada arquivo
+  como `<nome>.jsontmp`, apaga o `.json` antigo e renomeia. No cartão são
+  quatro operações lentas por arquivo (só criar leva 20–80 ms), dentro de um
+  frame. O port guarda o temporário na memória e uma thread faz as mesmas
+  operações na mesma ordem. `fopen`, `remove`, `rename` e `stat` do motor
+  passam pelo `port_imports` do runtime; quem pedir um arquivo ainda na fila
+  espera a thread. `dtm_saves_flush()` ao perder o foco e ao sair.
+- **Vibração (`dtm_rumble.c`)**: o jogo nunca pede vibração ao Android. O
+  gatilho é `GameCamera::Shake(amount, seconds)` (dano, objetos quebrando,
+  terremotos dos chefes), reimplementada a partir do código da 1.2.1 (campos
+  +0x58, +0x5c, +0x60 da câmera) e seguida do rumble. As oito primeiras
+  chamadas vão para o log, para calibrar a força.
+- **Teclado (`dtm_keyboard.c`)**: só existe um campo de texto, o nome do
+  personagem personalizado. `SoftKeyboard.ShowKeyboard` abre o teclado do
+  sistema depois do frame; o resultado volta por
+  `native_keyboardUpdateText` + `native_keyboardProcessDone` (ou
+  `…Cancelled`).

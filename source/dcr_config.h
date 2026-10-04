@@ -14,6 +14,8 @@ typedef struct {
   int log_input;    /* [debug] log_input */
   char language[12]; /* [game] language: "auto", or a code ("en", "pt-BR") */
   int events;        /* [game] events: weekly events on the console's clock */
+  int rumble;        /* [controls] rumble */
+  int background_saves; /* [performance] background_saves */
 } DcrConfig;
 
 /* Read config.ini (writing it with the defaults, or adding missing options,

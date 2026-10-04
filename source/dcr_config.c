@@ -22,6 +22,8 @@ static DcrConfig g_cfg = {
     .boost = 1,
     .language = "auto",
     .events = 1,
+    .rumble = 1,
+    .background_saves = 1,
 };
 
 const DcrConfig *dcr_config(void) { return &g_cfg; }
@@ -61,6 +63,15 @@ static const CfgOpt k_opts[] = {
      "# day's event can be played (and whatever else the game times runs on that\n"
      "# clock). false: as without a connection, no events.",
      CFG_BOOL, NULL, &g_cfg.events},
+    {"controls", "rumble", "true",
+     "Player 1's controller rumbles when the game shakes the screen (a hit, a\n"
+     "# boss's quake). The game itself has no vibration: this is the port's.",
+     CFG_BOOL, NULL, &g_cfg.rumble},
+    {"performance", "background_saves", "true",
+     "The game's saves are written to the SD card by a thread of the port's, so\n"
+     "# the game does not stop for them. false: written inside the game's frame,\n"
+     "# as on Android (try this if a save is ever lost).",
+     CFG_BOOL, NULL, &g_cfg.background_saves},
     /* [config] version = 1: the engine's row, last (CfgTable.version) */
 };
 

@@ -100,6 +100,7 @@ int dtm_load_engine(void) {
   so_flush_caches(&g_mod_game);
   dtm_firebase_patch();
   dtm_time_patch();
+  dtm_rumble_patch();
   return 0;
 }
 

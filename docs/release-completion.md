@@ -11,7 +11,14 @@ Process:
 
 ## Ready for changelog
 
-(nothing yet)
+All three below are **not yet tested on hardware**.
+
+- [ ] Saves no longer stop the game: they are written to the SD card in the
+      background (`[performance] background_saves` in config.ini turns it
+      off).
+- [ ] Rumble: player 1's controller rumbles when the game shakes the screen
+      (`[controls] rumble`).
+- [ ] The custom character's name can be typed, with the system keyboard.
 
 ## Released
 

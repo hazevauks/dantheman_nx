@@ -93,6 +93,21 @@ static int g_ntouch;
 
 static jlong now_ms(void) { return (jlong)(armTicksToNs(armGetSystemTick()) / 1000000ull); }
 
+/* The controller a player holds now (the console's Joy-Cons before the
+ * player's own slot, for player 1): its style and hid id, as read at the
+ * last poll. For the rumble. */
+u64 dtm_input_controller(int player, HidNpadIdType *id) {
+  if (player < 0 || player >= PLAYERS)
+    return 0;
+  Player *pl = &g_players[player];
+  for (int i = pl->npads - 1; i >= 0; i--)
+    if (padIsConnected(&pl->pads[i])) {
+      *id = rt_pad_slot_id(i == 1 ? RT_PAD_HANDHELD : player);
+      return padGetStyleSet(&pl->pads[i]);
+    }
+  return 0;
+}
+
 void dtm_input_init(void) {
   rt_pad_setup(PLAYERS, 1);
   memset(g_players, 0, sizeof g_players);

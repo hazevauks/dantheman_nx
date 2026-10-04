@@ -112,6 +112,8 @@ void port_focus_lost(void) {
     g_n.onFocusLost(ENV, CLS);
   if (g_n.saveOnExit)
     g_n.saveOnExit(ENV, CLS);
+  dtm_saves_flush(); /* on the card before the game may be closed from the HOME menu */
+  dtm_rumble_stop();
   dtm_audio_pause(1);
 }
 
@@ -185,6 +187,7 @@ static void report(void) {
   last_frames = frames;
   debugPrintf("[game] %lu frames (%.1f fps), %u audio blocks, %d Java objects\n", frames, fps,
               (unsigned)dtm_audio_blocks(), jni_live_objects());
+  dtm_saves_report();
   dcr_boost_report();
 }
 
@@ -228,6 +231,7 @@ int dtm_game_run(void) {
   dtm_input_init();
   dcr_watchdog_start();
   rt_watchdog_add_counter("audio blocks", dtm_audio_blocks);
+  dtm_saves_init(); /* before the engine opens its first file */
 
   system_init();
   debugPrintf("[game] NativeGameLib.GameInit\n");
@@ -259,6 +263,8 @@ int dtm_game_run(void) {
     } else if (g_n.gameRequestedRestart && g_n.gameRequestedRestart(ENV, CLS)) {
       debugPrintf("[game] the game asked to restart: not done here, it goes on\n");
     }
+    dtm_keyboard_frame(); /* the system keyboard, if the engine's frame asked for one */
+    dtm_rumble_frame();
     b_eglSwapBuffers(g_dpy, g_surf);
 
     const u64 now = armGetSystemTick();
@@ -291,6 +297,8 @@ int dtm_game_run(void) {
     if (g_n.saveOnExit)
       g_n.saveOnExit(ENV, CLS);
   }
+  dtm_saves_flush(); /* the last save, on the card before the process ends */
+  dtm_rumble_stop();
   dtm_audio_shutdown();
   egl_down();
   debugPrintf("[game] closed\n");

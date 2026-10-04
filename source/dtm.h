@@ -92,5 +92,26 @@ JNI_H_DECL(dtm_h_keystore_set);
 void dtm_input_init(void);
 void dtm_input_poll(int width, int height);
 void dtm_input_reset(void); /* focus lost: held keys and touches let go */
+/* The controller a player holds now: its style (0: none) and its hid id. */
+u64 dtm_input_controller(int player, HidNpadIdType *id);
+
+/* dtm_saves.c: the engine's saves written to the card by a thread of the
+ * port's (init before the engine runs; flush when the game leaves the screen
+ * or closes) */
+void dtm_saves_init(void);
+void dtm_saves_flush(void);
+void dtm_saves_report(void);
+
+/* dtm_rumble.c: the controller rumbles with the game's camera shakes (the
+ * patch once the module is sealed as code; frame from the frame loop) */
+void dtm_rumble_patch(void);
+void dtm_rumble_frame(void);
+void dtm_rumble_stop(void);
+
+/* dtm_keyboard.c: com.halfbrick.mortar.SoftKeyboard as the system keyboard
+ * (frame from the frame loop, after the engine's step) */
+void dtm_keyboard_frame(void);
+JNI_H_DECL(dtm_h_keyboard_show);
+JNI_H_DECL(dtm_h_keyboard_hide);
 
 #endif /* DTM_H */

@@ -144,6 +144,12 @@ const JMethodDef jni_method_defs[] = {
     /* small values the engine keeps between launches (dtm_keystore.c) */
     {"com/halfbrick/mortar/KeyStore", "GetValue", "(" S ")" S, dtm_h_keystore_get},
     {"com/halfbrick/mortar/KeyStore", "SetValue", "(" S S ")Z", dtm_h_keystore_set},
+    /* the text field's keyboard (dtm_keyboard.c); its other methods (SetText,
+     * SetSelectedRegion: the engine telling the Java's editor what it holds)
+     * have nothing to do here */
+    {"com/halfbrick/mortar/SoftKeyboard", "ShowKeyboard", "(" S "IIII)V", dtm_h_keyboard_show},
+    {"com/halfbrick/mortar/SoftKeyboard", "HideKeyboard", "()V", dtm_h_keyboard_hide},
+    {"com/halfbrick/mortar/SoftKeyboard", NULL, NULL, jni_h_void},
     {"org/OpenUDID/OpenUDID_manager", "isInitialized", "()Z", jni_h_true},
     {"org/OpenUDID/OpenUDID_manager", "getOpenUDID", "()" S, h_device_id},
     /* the crash reporter: every method does nothing */
