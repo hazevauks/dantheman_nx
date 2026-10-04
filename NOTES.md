@@ -5,8 +5,8 @@ armeabi-v7a) para Nintendo Switch sobre o runtime
 [android32](https://github.com/aks796/android32) (submódulo em `runtime/`,
 commit `50b352c`).
 
-Estado: **rascunho ainda não compilado** (a máquina não tinha Docker quando
-foi escrito). O primeiro build vai apontar erros de compilação a corrigir.
+Estado: **compila e liga** (build no GitHub Actions, `.github/workflows/build.yml`,
+nos containers do runtime). **Ainda não foi executado** em hardware nem emulador.
 
 ## O jogo
 
@@ -61,11 +61,8 @@ não está implementado. Se for o segundo, a alternativa é `RT_OPENSLES 1`.
 
 ## Pendências
 
-- [ ] Instalar Docker Desktop (com WSL 2) e baixar `ghcr.io/vita2hos/devcontainer/vita2hos`
-- [ ] libnx32 em `../libnx32/prefix` (release `libnx32.zip` 4.12.0) e Mesa em `portlibs32/` (release `mesa32.zip` ou `mesa-switch32.zip`)
-- [ ] Gerar `source/imports.c`: `python3 runtime/tools/gen_imports.py` (precisa de Python 3; pode rodar dentro do container)
-- [ ] Primeiro build (`./build.sh`) e correção dos erros
-- [ ] `launcher/icon.jpg` (256×256) — ainda não existe
+- [x] Build no GitHub Actions: libnx32 e mesa32 dos releases, `source/imports.c` gerado a cada build (224 imports, 0 faltando), NSP e NRO como artefato `dantheman_nx`
+- [ ] `launcher/icon.jpg` é um provisório só com texto: trocar por um ícone definitivo (256×256)
 - [ ] Primeiro teste no hardware: mandar `debug.log` e `crash.log`; a lista de métodos Java "unhandled" do log é a lista de tarefas de `dtm_java.c`
 - [ ] Idioma: hoje fixo em `"en"`; ler o idioma do console
 - [ ] Mapeamento final dos botões (A/B por rótulo ou por posição) e analógicos via `motionEvent`
