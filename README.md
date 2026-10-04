@@ -2,8 +2,9 @@
 
 <p align="center"><img src="docs/banner.jpg" alt="Dan the Man" width="502"></p>
 
-**Dan the Man for Nintendo Switch** — a port of the 32-bit Android version,
-built on the [android32](https://github.com/aks796/android32) runtime.
+**Dan the Man for Nintendo Switch** — a port of **version 1.2.1** of the
+32-bit Android game, built on the
+[android32](https://github.com/aks796/android32) runtime.
 
 The port is a wrapper: it loads the game's own code from your APK and gives
 it what it expects from Android. **No game files are included.** You need
@@ -12,8 +13,10 @@ your own copy of the game.
 ## What you need
 
 - A Switch with Atmosphère and [sphaira](https://github.com/ITotalJustice/sphaira)
-- Your own APK of **Dan the Man 1.2.1** (`com.halfbrick.dantheman`, the
-  `armeabi-v7a` build). Other versions are untested.
+- Your own APK of **Dan the Man 1.2.1** (`com.halfbrick.dantheman`,
+  versionCode 1210006, the `armeabi-v7a` build). The port was made for and
+  tested with this version only: other versions are untested and may not
+  work.
 
 ## Installing
 
