@@ -98,6 +98,7 @@ int dtm_load_engine(void) {
   so_fix_kuser_helpers(&g_mod_game);
   so_finalize(&g_mod_game);
   so_flush_caches(&g_mod_game);
+  dtm_firebase_patch();
   return 0;
 }
 

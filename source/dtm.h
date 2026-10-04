@@ -50,6 +50,9 @@ extern DtmNatives g_n;
 int dtm_load_engine(void);       /* 0, or negative (logged) */
 void dtm_run_constructors(void); /* System.loadLibrary: the init array, JNI_OnLoad */
 
+/* dtm_firebase.c: FirebaseNS replaced, once the module is sealed as code */
+void dtm_firebase_patch(void);
+
 /* dtm_java.c */
 extern JObj *g_activity; /* MortarGameActivity */
 extern void *g_gamelib;  /* NativeGameLib's class object: the natives' second argument */

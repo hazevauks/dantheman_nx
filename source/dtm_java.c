@@ -25,6 +25,7 @@
 #define GA "com/halfbrick/mortar/MortarGameActivity"
 #define GL "com/halfbrick/mortar/NativeGameLib"
 #define MX "com/halfbrick/mortar/MortarAudioMixerOut"
+#define HB "com/halfbrick/mortar/HBSupport"
 #define S "Ljava/lang/String;"
 
 #define H(fn) static jvalue fn(JObj *self, const jvalue *a, const JMethod *m)
@@ -45,10 +46,92 @@ H(h_GetActivity) { return jv_l(jni_retain(g_activity)); }
  * on. One thread calls them here; the engine only needs it to exist. */
 H(h_GetSyncObj) { return jv_l(jni_retain(jni_singleton("java/lang/Object"))); }
 
+/* NativeGameLib.native_threadEntry(int): how every thread of the engine
+ * starts. Its pthread attaches itself to the VM and calls this native method
+ * THROUGH Java (CallStaticVoidMethod), so that the thread has a Java frame
+ * under it; the native itself is registered from JNI_OnLoad and runs the
+ * thread's body, returning when the thread ends. Without this no engine
+ * thread does anything. */
+H(h_threadEntry) {
+  void (*entry)(void *env, void *cls, jint id) =
+      (void (*)(void *, void *, jint))jni_native(GL, "native_threadEntry");
+  if (!entry) {
+    debugPrintf("[java] native_threadEntry(%d): not registered -- the thread does nothing\n",
+                (int)a[0].i);
+    return jv_none();
+  }
+  entry(g_jni_env, g_gamelib, a[0].i);
+  return jv_none();
+}
+
+/* ------------------------------------------------------------- HBSupport */
+/* com.halfbrick.mortar.HBSupport: what the phone is. The identifiers are
+ * constants: nothing here is sent anywhere, and a save made on one console
+ * then reads the same on another. */
+#define DEVICE_ID "dantheman-nx-0000000000000000"
+H(h_device_id) { return jv_l(jni_str(DEVICE_ID)); }
+H(h_uuid) { return jv_l(jni_str("00000000-0000-4000-8000-000000000000")); }
+/* Build.VERSION.SDK_INT, as text: Android 6.0 */
+H(h_android_version) { return jv_l(jni_str("23")); }
+/* PackageInfo.versionCode as text, and versionName: the APK's own */
+H(h_package_version) {
+  if (dcr_manifest_loaded() && dcr_manifest_version_code() > 0)
+    return jv_l(jni_str_fmt("%d", dcr_manifest_version_code()));
+  return jv_l(jni_str("1210006"));
+}
+H(h_package_version_short) {
+  const char *v = dcr_manifest_loaded() ? dcr_manifest_version_name() : NULL;
+  return jv_l(jni_str(v && v[0] ? v : "1.2.1"));
+}
+H(h_model) { return jv_l(jni_str("Switch")); }
+H(h_manufacturer) { return jv_l(jni_str("Nintendo")); }
+H(h_country) { return jv_l(jni_str("US")); }
+/* Locale: language, then "-" country */
+H(h_locale) { return jv_l(jni_str("en-US")); }
+/* /proc/meminfo's MemTotal, in kB: 2 GB */
+H(h_total_ram) { return jv_j(2 * 1024 * 1024); }
+/* DisplayMetrics.densityDpi: the 6.2" 720p screen */
+H(h_density) { return jv_i(240); }
+/* 15 no touch screen, 0 one finger, 1 two, 2 distinct, 3 five or more */
+H(h_touch_caps) { return jv_i(3); }
+/* PackageManager.hasSystemFeature: the touch screen's, nothing else */
+H(h_has_feature) {
+  const char *f = jni_utf(a[0].l);
+  const int has = !strncmp(f, "android.hardware.touchscreen", 28);
+  debugPrintf("[java] HBSupport.HasSystemFeature(%s) -> %d\n", f, has);
+  return jv_z(has);
+}
+
 const JMethodDef jni_method_defs[] = {
     {"android/content/Context", "getPackageName", "()" S, h_getPackageName},
     {GA, "GetActivity", "()Landroid/app/Activity;", h_GetActivity},
     {GL, "GetSyncObj", "()Ljava/lang/Object;", h_GetSyncObj},
+    {GL, "native_threadEntry", "(I)V", h_threadEntry},
+    /* the device (InitDeviceProperties, SystemInit) */
+    {HB, "GetDeviceID", "()" S, h_device_id},
+    {HB, "GetAndroidID", "()" S, h_device_id},
+    {HB, "GetUUID", "()" S, h_uuid},
+    {HB, "GetAdvertisingId", "()" S, h_uuid},
+    {HB, "GetAndroidVersion", "()" S, h_android_version},
+    {HB, "GetPackageName", "()" S, h_getPackageName},
+    {HB, "GetPackageVersion", "()" S, h_package_version},
+    {HB, "GetPackageVersionShort", "()" S, h_package_version_short},
+    {HB, "GetModel", "()" S, h_model},
+    {HB, "GetManufacturer", "()" S, h_manufacturer},
+    {HB, "GetCountry", "()" S, h_country},
+    {HB, "GetDeviceLanguage", "()" S, h_locale},
+    {HB, "GetDeviceLocale", "()" S, h_locale},
+    {HB, "GetWifi", "()I", jni_h_zero},        /* not connected */
+    {HB, "IsDeviceTablet", "()I", jni_h_zero}, /* under the Java's diagonal for one */
+    {HB, "GetDeviceTotalRAM", "()J", h_total_ram},
+    {HB, "GetDensityDPIType", "()I", h_density},
+    {HB, "GetTouchscreenCapabilities", "()I", h_touch_caps},
+    {HB, "HasSystemFeature", "(" S ")Z", h_has_feature},
+    {HB, "GetTVDevice", "()I", jni_h_zero},    /* not a television */
+    {"org/OpenUDID/OpenUDID_manager", "isInitialized", "()Z", jni_h_true},
+    {"org/OpenUDID/OpenUDID_manager", "getOpenUDID", "()" S, h_device_id},
+    /* the crash reporter: every method does nothing */
+    {"com/halfbrick/mortar/MortarCrashlytics", NULL, NULL, jni_h_void},
     /* the engine's sound output (dtm_audio.c) */
     {MX, "Create", "()L" MX ";", dtm_h_mixer_create},
     {MX, "GetNativeSampleRate", "()I", dtm_h_mixer_rate},
