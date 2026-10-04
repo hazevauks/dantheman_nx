@@ -143,8 +143,8 @@ consulta) estão no `.gitignore`.
 - A mesma verificação é usada em outros pontos (32 chamadores): o portão por
   tempo do mapa (`GameScreenStoryMap::IsLastLevelLockedByTime`), ofertas
   (`GameOffers`), notificações, a loja. Com a hora confiável esses caminhos
-  passam a rodar no relógio do console. **Efeitos ainda não observados no
-  hardware.**
+  passam a rodar no relógio do console. Testado no hardware pelo autor do
+  port (build 202610041409): os eventos funcionam; lançado na 0.1.5.
 - O botão de vídeo da tela de evento (`AdButtonPressedHandler`) também exige
   rede e anúncio: continua indisponível, de propósito. Recompensas por
   anúncio não são simuladas: é como a Halfbrick monetiza o jogo.

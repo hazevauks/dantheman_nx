@@ -33,7 +33,7 @@ static const CfgOpt k_opts[] = {
      CFG_BOOL, NULL, &g_cfg.stick_dpad},
     CFG_ROW_SWAP_AB("Swap A and B. false: the buttons work by where they are, as on the\n"
                     "# game's own pad: B (bottom) jumps and confirms, Y (left) hits, A (right)\n"
-                    "# and X (top) are the other two.",
+                    "# uses the secondary weapon, X (top) switches weapons.",
                     &g_cfg.swap_ab),
     {"touch", "enabled", "true", "The touch screen works as on the phone (handheld mode).", CFG_BOOL,
      NULL, &g_cfg.touch},

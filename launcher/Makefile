@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------------
 APP_TITLE    := Dan the Man
 APP_AUTHOR   := hazevauks
-APP_VERSION  := 0.1.0
+APP_VERSION  := 0.1.5
 TARGET       := dantheman_nx
 PORT_PAYLOAD := dantheman_nx
 LAUNCHER_SOURCES :=

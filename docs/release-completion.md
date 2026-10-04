@@ -11,12 +11,18 @@ Process:
 
 ## Ready for changelog
 
-- [ ] Weekly events: the day's event can be played, on the console's clock
-      (`[game] events` in config.ini turns it off). **Not yet tested on
-      hardware.** The screen's video button stays unavailable: there are no
-      ads on a Switch.
+(nothing yet)
 
 ## Released
+
+### 0.1.5
+
+- Weekly events: the day's event can be played, on the console's clock
+  instead of Halfbrick's time server (`[game] events` in config.ini turns it
+  off). The screen's video button stays unavailable: there are no ads on a
+  Switch, and what the game gives for watching one is not handed out.
+- The README lists what A, X and L do; config.ini's help for the buttons
+  says the same.
 
 ### 0.1.0
 
