@@ -5,8 +5,8 @@ armeabi-v7a) para Nintendo Switch sobre o runtime
 [android32](https://github.com/aks796/android32) (submódulo em `runtime/`,
 commit `50b352c`).
 
-Estado: **compila e liga** (build no GitHub Actions, `.github/workflows/build.yml`,
-nos containers do runtime). **Ainda não foi executado** em hardware nem emulador.
+Estado: **roda no hardware** — entra no jogo, jogável até o primeiro checkpoint da
+fase 1, sai sem crash. Build no GitHub Actions (`.github/workflows/build.yml`).
 
 ## O jogo
 
@@ -48,9 +48,12 @@ entrega PCM à classe Java `MortarAudioMixerOut` (um `AudioTrack` estéreo de
 `dtm_audio.c` responde `Create` / `GetNativeSampleRate` (48 kHz) / `Init` /
 `WriteData` mandando os blocos para o audout.
 
-**A verificar no hardware:** se, com OpenSL recusado, o motor realmente cai em
-`MAMAudioThread_AndroidJava` ou no `SoundManager` Java antigo (SoundPool), que
-não está implementado. Se for o segundo, a alternativa é `RT_OPENSLES 1`.
+Confirmado no hardware: `NativeGameLib.SupportsOpenSL()` responde `false`, o motor
+cria `MAMAudioThread_AndroidJava` e escreve 2004 frames estéreo por vez.
+
+**Atenção:** `Init(rate)` devolve a própria taxa recebida, não um tamanho de buffer.
+O motor usa esse valor como taxa de saída e reamostra a mixagem (44,1 kHz interna)
+para ela; devolver outro número acelera e distorce o som.
 
 ## Entrada
 
@@ -62,10 +65,11 @@ não está implementado. Se for o segundo, a alternativa é `RT_OPENSLES 1`.
 ## Pendências
 
 - [x] Build no GitHub Actions: libnx32 e mesa32 dos releases, `source/imports.c` gerado a cada build (224 imports, 0 faltando), NSP e NRO como artefato `dantheman_nx`
-- [ ] `launcher/icon.jpg` é um provisório só com texto: trocar por um ícone definitivo (256×256)
 - [ ] Primeiro teste no hardware: mandar `debug.log` e `crash.log`; a lista de métodos Java "unhandled" do log é a lista de tarefas de `dtm_java.c`
 - [ ] Idioma: hoje fixo em `"en"`; ler o idioma do console
-- [ ] Mapeamento final dos botões (A/B por rótulo ou por posição) e analógicos via `motionEvent`
+- [x] Botões por posição: B pula/confirma, Y bate (`swap_a_b` no config.ini troca A e B)
+- [ ] Analógicos via `motionEvent`
+- [ ] Conferir se o save persiste entre execuções (`KeyStore` agora grava em `data/keystore.txt`)
 
 ## Ferramentas (`tools/`)
 
@@ -79,3 +83,20 @@ Sem binutils nem Python na máquina, dois scripts Perl fazem a análise:
 
 O APK, a pasta extraída dele e `_refs/` (clones de outros ports só para
 consulta) estão no `.gitignore`.
+
+## Achados dos testes no hardware
+
+- **Firebase**: o SDK aborta se não carrega suas classes Java. O jogo só o usa
+  pela camada `FirebaseNS`, cujas 18 funções são substituídas por stubs
+  (`dtm_firebase.c`); os valores de remote config são os padrões que o jogo
+  passa a `FirebaseNS::Init` (14 pares chave/valor, layout confirmado no log).
+- **Threads do motor**: cada pthread do motor chama
+  `NativeGameLib.native_threadEntry(int)` via JNI; o handler repassa ao nativo
+  registrado em `JNI_OnLoad`. Sem isso nenhuma thread do motor trabalha.
+- **`HBSupport`**: consultas de dispositivo respondidas em `dtm_java.c`
+  (IDs constantes, Android 23, 240 dpi, multitoque, não é TV nem tablet).
+- **Caminhos `data/app/…/base.apk/<arquivo>`** no log: o motor procura cada
+  arquivo também num "mount" do APK com caminho relativo; essas tentativas
+  falham e ele segue para o caminho certo. Só ruído.
+- `tools/thumbcalls.pl` lista o que uma função Thumb do motor chama e as
+  constantes em volta — foi como o problema do áudio foi achado.

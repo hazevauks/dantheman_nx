@@ -11,7 +11,9 @@
  *   static GetNativeSampleRate()  AudioTrack.getNativeOutputSampleRate(MUSIC)
  *   Init(rate)                    AudioTrack(MUSIC, rate, STEREO, PCM 16,
  *                                 getMinBufferSize(...), STREAM); play();
- *                                 returns the buffer's size in bytes
+ *                                 returns the RATE it was given: the engine
+ *                                 takes it as the rate its sound will be
+ *                                 played at, and resamples its mix to it
  *   WriteData(short[] / byte[])   AudioTrack.write(data, 0, length): blocks
  *                                 until the track took it, which is what
  *                                 paces the engine's audio thread
@@ -93,14 +95,15 @@ JNI_H_DECL(dtm_h_mixer_create) {
 
 JNI_H_DECL(dtm_h_mixer_rate) { return jv_i((jint)rt_audout_rate()); }
 
-/* The AudioTrack's buffer, in bytes: one of audout's buffers. */
+/* The rate the track plays at, which is what the Java returns (its own
+ * argument). The engine resamples every buffer from its mixer's rate to this
+ * one: any other number here (the first build answered a buffer size, 4096)
+ * and it packs several times the sound into each buffer. audout plays at
+ * its own rate whatever is asked, so that is the answer. */
 JNI_H_DECL(dtm_h_mixer_init) {
-  debugPrintf("[audio] MortarAudioMixerOut.Init(%d Hz): %d-byte buffer\n", (int)a[0].i,
-              RT_AUDOUT_FRAMES * 4);
-  if ((unsigned)a[0].i != rt_audout_rate())
-    debugPrintf("[audio] the engine mixes at %d Hz, audout plays at %u Hz: the pitch will be off\n",
-                (int)a[0].i, rt_audout_rate());
-  return jv_i(RT_AUDOUT_FRAMES * 4);
+  const jint rate = (jint)rt_audout_rate();
+  debugPrintf("[audio] MortarAudioMixerOut.Init(%d Hz) -> %d Hz\n", (int)a[0].i, (int)rate);
+  return jv_i(rate);
 }
 
 /* WriteData(short[]) and WriteData(byte[]): the whole array. */

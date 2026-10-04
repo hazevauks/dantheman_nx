@@ -72,6 +72,10 @@ JNI_H_DECL(dtm_h_mixer_rate);
 JNI_H_DECL(dtm_h_mixer_init);
 JNI_H_DECL(dtm_h_mixer_write);
 
+/* dtm_keystore.c: com.halfbrick.mortar.KeyStore, in <game folder>/data/keystore.txt */
+JNI_H_DECL(dtm_h_keystore_get);
+JNI_H_DECL(dtm_h_keystore_set);
+
 /* dtm_input.c */
 void dtm_input_init(void);
 void dtm_input_poll(int width, int height);

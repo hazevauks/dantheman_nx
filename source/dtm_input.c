@@ -51,12 +51,15 @@ enum {
 /* android.view.MotionEvent */
 enum { AM_DOWN = 0, AM_UP = 1, AM_MOVE = 2 };
 
+/* The face buttons by where they are, not by their letters: Android's
+ * BUTTON_A is the bottom one and BUTTON_X the left one (the game jumps with
+ * the first and hits with the second), which on a Switch pad are B and Y. */
 static const struct {
   u64 button;
   int code;
 } k_keys[] = {
-    {HidNpadButton_A, AK_BUTTON_A},          {HidNpadButton_B, AK_BUTTON_B},
-    {HidNpadButton_X, AK_BUTTON_X},          {HidNpadButton_Y, AK_BUTTON_Y},
+    {HidNpadButton_B, AK_BUTTON_A},          {HidNpadButton_A, AK_BUTTON_B},
+    {HidNpadButton_Y, AK_BUTTON_X},          {HidNpadButton_X, AK_BUTTON_Y},
     {HidNpadButton_L, AK_BUTTON_L1},         {HidNpadButton_R, AK_BUTTON_R1},
     {HidNpadButton_ZL, AK_BUTTON_L2},        {HidNpadButton_ZR, AK_BUTTON_R2},
     {HidNpadButton_StickL, AK_BUTTON_THUMBL}, {HidNpadButton_StickR, AK_BUTTON_THUMBR},

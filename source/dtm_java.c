@@ -94,6 +94,8 @@ H(h_total_ram) { return jv_j(2 * 1024 * 1024); }
 H(h_density) { return jv_i(240); }
 /* 15 no touch screen, 0 one finger, 1 two, 2 distinct, 3 five or more */
 H(h_touch_caps) { return jv_i(3); }
+/* Configuration.screenLayout: SCREENLAYOUT_SIZE_NORMAL | SCREENLAYOUT_LONG_YES */
+H(h_screen_layout) { return jv_i(0x22); }
 /* PackageManager.hasSystemFeature: the touch screen's, nothing else */
 H(h_has_feature) {
   const char *f = jni_utf(a[0].l);
@@ -128,6 +130,13 @@ const JMethodDef jni_method_defs[] = {
     {HB, "GetTouchscreenCapabilities", "()I", h_touch_caps},
     {HB, "HasSystemFeature", "(" S ")Z", h_has_feature},
     {HB, "GetTVDevice", "()I", jni_h_zero},    /* not a television */
+    {HB, "GetPhysicalScreenSizeTypeMask", "()I", h_screen_layout},
+    /* the Java answers true except on one maker's phones; false keeps the
+     * engine on its own mixer and MortarAudioMixerOut (dtm_audio.c) */
+    {GL, "SupportsOpenSL", "()Z", jni_h_false},
+    /* small values the engine keeps between launches (dtm_keystore.c) */
+    {"com/halfbrick/mortar/KeyStore", "GetValue", "(" S ")" S, dtm_h_keystore_get},
+    {"com/halfbrick/mortar/KeyStore", "SetValue", "(" S S ")Z", dtm_h_keystore_set},
     {"org/OpenUDID/OpenUDID_manager", "isInitialized", "()Z", jni_h_true},
     {"org/OpenUDID/OpenUDID_manager", "getOpenUDID", "()" S, h_device_id},
     /* the crash reporter: every method does nothing */

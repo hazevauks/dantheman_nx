@@ -29,8 +29,9 @@ static const CfgOpt k_opts[] = {
      "The left stick also works as the D-pad (moving, and the menus), as\n"
      "# Android turns a gamepad's stick into D-pad keys.",
      CFG_BOOL, NULL, &g_cfg.stick_dpad},
-    CFG_ROW_SWAP_AB("Swap A and B. false: the Switch's A is the game's confirm / jump button\n"
-                    "# (Android's BUTTON_A), as the buttons are placed on the game's own pad.",
+    CFG_ROW_SWAP_AB("Swap A and B. false: the buttons work by where they are, as on the\n"
+                    "# game's own pad: B (bottom) jumps and confirms, Y (left) hits, A (right)\n"
+                    "# and X (top) are the other two.",
                     &g_cfg.swap_ab),
     {"touch", "enabled", "true", "The touch screen works as on the phone (handheld mode).", CFG_BOOL,
      NULL, &g_cfg.touch},
@@ -58,7 +59,7 @@ static void apply(void) {
   debugPrintf("[config] %dx%d (%s, %s); stick as D-pad %s, A/B %s, touch %s, CPU boost %s\n",
               g_cfg.res_w, g_cfg.res_h, rt_config_get("display", "resolution"),
               docked ? "docked" : "handheld", g_cfg.stick_dpad ? "on" : "off",
-              g_cfg.swap_ab ? "swapped" : "as placed", g_cfg.touch ? "on" : "off",
+              g_cfg.swap_ab ? "swapped" : "by position (B jumps, Y hits)", g_cfg.touch ? "on" : "off",
               g_cfg.boost ? "on" : "off");
 }
 
