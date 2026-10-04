@@ -1,5 +1,7 @@
 # dantheman_nx
 
+<p align="center"><img src="docs/banner.jpg" alt="Dan the Man" width="502"></p>
+
 **Dan the Man for Nintendo Switch** — a port of the 32-bit Android version,
 built on the [android32](https://github.com/aks796/android32) runtime.
 
@@ -70,7 +72,8 @@ folder, [mesa32](https://github.com/aks796/mesa32)'s `lib/` and `include/` in
 ## Credits
 
 - The game: Halfbrick Studios. This port is not affiliated with or endorsed
-  by them.
+  by them. "Dan the Man", the banner above and the launcher's icon are
+  Halfbrick Studios' name and artwork, shown only to identify the game.
 - [android32](https://github.com/aks796/android32),
   [libnx32](https://github.com/aks796/libnx32) and
   [mesa32](https://github.com/aks796/mesa32) by aks796, and the projects
@@ -80,5 +83,5 @@ folder, [mesa32](https://github.com/aks796/mesa32)'s `lib/` and `include/` in
 
 ## License
 
-MIT for the port's own code: see [LICENSE](LICENSE). The game is not covered
-by it.
+MIT for the port's own code: see [LICENSE](LICENSE). The game, its name and
+its artwork (`docs/banner.jpg`, `launcher/icon.jpg`) are not covered by it.
