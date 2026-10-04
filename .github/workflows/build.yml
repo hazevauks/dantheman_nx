@@ -9,8 +9,6 @@ name: build
 
 on:
   push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -52,6 +50,11 @@ jobs:
 
       - name: the import table (source/imports.c)
         run: python3 runtime/tools/gen_imports.py
+
+      # The toolchain container does not run as the runner's user: it must be
+      # able to write build/ and the outputs into the checkout.
+      - name: let the containers write into the checkout
+        run: chmod -R a+rwX "$GITHUB_WORKSPACE"
 
       - name: the 32-bit program (dantheman_nx.nsp)
         run: sh ./build.sh
