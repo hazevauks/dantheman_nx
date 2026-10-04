@@ -1,0 +1,77 @@
+/* dtm.h -- what Dan the Man's port files share: the engine's module, its
+ * natives (com.halfbrick.mortar.NativeGameLib's), and each file's entry
+ * points. MIT.
+ */
+#ifndef DTM_H
+#define DTM_H
+
+#include <stdint.h>
+
+#include "jni.h"
+#include "so_util.h"
+
+/* ------------------------------------------------------------- the engine */
+extern so_module g_mod_game;
+
+/* NativeGameLib's natives, as the Java declares them (classes2.dex): every
+ * one is static, so the second argument is the class object. Floats and
+ * doubles travel in core registers (softfp), as the engine was built. */
+typedef struct {
+  void (*InitDeviceProperties)(void *env, void *cls);
+  void (*InitFileManager)(void *env, void *cls, void *apk, void *files, void *cache, void *external,
+                          jboolean flag);
+  jboolean (*InitOpenSLSoundManager)(void *env, void *cls, void *asset_manager);
+  void (*InitJavaSoundManager)(void *env, void *cls);
+  jint (*GLESVersion)(void *env, void *cls);
+  void (*SystemInit)(void *env, void *cls, jint width, jint height, void *language);
+  void (*GameInit)(void *env, void *cls);
+  jboolean (*step)(void *env, void *cls);
+  jboolean (*gameRequestedQuit)(void *env, void *cls);
+  jboolean (*gameRequestedRestart)(void *env, void *cls);
+  void (*confirmQuitRequest)(void *env, void *cls, jboolean quit);
+  void (*saveOnExit)(void *env, void *cls);
+  void (*onPause)(void *env, void *cls);
+  void (*onResume)(void *env, void *cls, void *pixels, jint width, jint height, jboolean flag);
+  jboolean (*onResumeStep)(void *env, void *cls);
+  void (*onFocusLost)(void *env, void *cls);
+  void (*onFocusRetrieved)(void *env, void *cls);
+  void (*SetAppLicensed)(void *env, void *cls, jboolean licensed);
+  void (*StoragePermissionResult)(void *env, void *cls, jboolean granted);
+  void (*keyEvent)(void *env, void *cls, jint code, jboolean down, jboolean flag, jint device);
+  void (*motionEvent)(void *env, void *cls, jint device, jint axis, jfloat x, jfloat y);
+  void (*touchEvent)(void *env, void *cls, jint action, jlong time, jint pointer, jfloat x, jfloat y,
+                     jfloat pressure, jfloat size);
+  void (*onGameControllerAttach)(void *env, void *cls, jint device, void *name);
+  void (*onGameControllerDetach)(void *env, void *cls, jint device);
+} DtmNatives;
+extern DtmNatives g_n;
+
+/* dtm_loader.c */
+int dtm_load_engine(void);       /* 0, or negative (logged) */
+void dtm_run_constructors(void); /* System.loadLibrary: the init array, JNI_OnLoad */
+
+/* dtm_java.c */
+extern JObj *g_activity; /* MortarGameActivity */
+extern void *g_gamelib;  /* NativeGameLib's class object: the natives' second argument */
+void dtm_java_init(void);
+
+/* dtm_game.c */
+int dtm_game_run(void);
+
+/* dtm_audio.c: MortarAudioMixerOut, the engine's PCM through audout */
+int dtm_audio_init(void);
+void dtm_audio_pause(int paused);
+void dtm_audio_shutdown(void);
+uint32_t dtm_audio_blocks(void);
+/* the Java class's methods, for the handler tables (dtm_java.c) */
+JNI_H_DECL(dtm_h_mixer_create);
+JNI_H_DECL(dtm_h_mixer_rate);
+JNI_H_DECL(dtm_h_mixer_init);
+JNI_H_DECL(dtm_h_mixer_write);
+
+/* dtm_input.c */
+void dtm_input_init(void);
+void dtm_input_poll(int width, int height);
+void dtm_input_reset(void); /* focus lost: held keys and touches let go */
+
+#endif /* DTM_H */
