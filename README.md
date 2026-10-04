@@ -37,8 +37,10 @@ To remove it, delete `sd:/switch/dantheman_nx/` and the folder under
 | D-pad / left stick | move |
 | B | jump, confirm |
 | Y | hit |
-| A, X | the game's other two buttons |
-| L, R, ZL, ZR | shoulder buttons |
+| A | use the secondary weapon |
+| X | switch weapons |
+| L | take an in-game picture |
+| R, ZL, ZR | the game's other shoulder buttons |
 | + | start / pause |
 | − | back |
 | Touch screen | as on a phone (handheld) |
