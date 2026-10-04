@@ -101,6 +101,7 @@ int dtm_load_engine(void) {
   dtm_firebase_patch();
   dtm_time_patch();
   dtm_rumble_patch();
+  dtm_ads_patch();
   return 0;
 }
 
