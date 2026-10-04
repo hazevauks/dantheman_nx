@@ -11,7 +11,10 @@ Process:
 
 ## Ready for changelog
 
-(nothing yet)
+- [ ] Weekly events: the day's event can be played, on the console's clock
+      (`[game] events` in config.ini turns it off). **Not yet tested on
+      hardware.** The screen's video button stays unavailable: there are no
+      ads on a Switch.
 
 ## Released
 

@@ -127,3 +127,26 @@ consulta) estão no `.gitignore`.
 - Analógicos via `motionEvent` (hoje o esquerdo vira D-pad).
 - 2 jogadores, modo dock (1080p) e toque não foram exercitados nos testes.
 - O ícone do launcher é arte do jogo fornecida pelo autor do port.
+
+## Eventos semanais (relógio do console)
+
+- Os eventos vêm de um calendário dentro do APK (`definitions/weekly_events`,
+  no XML binário "bxml" da Halfbrick), sem datas absolutas: o evento do dia é
+  calculado da data corrente (`GameWeeklyEvents::GetCalendarCurrentDay`).
+- O que bloqueava era `Game::IsServerTimeReliable`: a cada frame
+  `Game::UpdateServerTime` pergunta ao `ITimeService` do Mortar a hora e se ela
+  é confiável, e guarda no objeto `Game` (hora em +0x170, "confiável" em
+  +0x184). Sem servidor, nunca é confiável.
+- `dtm_time.c` substitui `Game::UpdateServerTime` pelo ramo "confiável" com o
+  relógio do console (`Mortar::Timing::GetSecondsSinceEpoch`). Só aplica se o
+  código da função for o da 1.2.1 de onde os offsets foram lidos.
+- A mesma verificação é usada em outros pontos (32 chamadores): o portão por
+  tempo do mapa (`GameScreenStoryMap::IsLastLevelLockedByTime`), ofertas
+  (`GameOffers`), notificações, a loja. Com a hora confiável esses caminhos
+  passam a rodar no relógio do console. **Efeitos ainda não observados no
+  hardware.**
+- O botão de vídeo da tela de evento (`AdButtonPressedHandler`) também exige
+  rede e anúncio: continua indisponível, de propósito. Recompensas por
+  anúncio não são simuladas: é como a Halfbrick monetiza o jogo.
+- `tools/thumbxref.pl` lista quem chama uma função do motor (direto ou pela
+  PLT).

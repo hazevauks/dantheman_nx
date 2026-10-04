@@ -29,7 +29,7 @@
  * literal must be 4-aligned, so a function at an address that is not gets a
  * NOP first). The address's low bit picks the state of the function jumped
  * to, as any interworking branch. An ARM function takes the runtime's stub. */
-static int hook(uintptr_t fn, void *dst) {
+int dtm_hook(uintptr_t fn, void *dst) {
   if (!(fn & 1)) {
     hook_arm(fn, (uintptr_t)dst);
     return 0;
@@ -144,7 +144,7 @@ void dtm_firebase_patch(void) {
       debugPrintf("[firebase] no %s in this engine\n", k_hooks[i].sym);
       continue;
     }
-    if (hook(fn, k_hooks[i].fn) == 0)
+    if (dtm_hook(fn, k_hooks[i].fn) == 0)
       done++;
     else
       debugPrintf("[firebase] could not patch %s\n", k_hooks[i].sym);

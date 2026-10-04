@@ -21,6 +21,7 @@ static DcrConfig g_cfg = {
     .res_h = 720,
     .boost = 1,
     .language = "auto",
+    .events = 1,
 };
 
 const DcrConfig *dcr_config(void) { return &g_cfg; }
@@ -54,6 +55,12 @@ static const CfgOpt k_opts[] = {
      "# it, ja, pt, ru, tr, zh-CN, zh-TW (a language the game does not have plays\n"
      "# in English).",
      CFG_TEXT, NULL, g_cfg.language, 0, 0, sizeof g_cfg.language},
+    {"game", "events", "true",
+     "Weekly events. The game only trusts a date from its own servers, which a\n"
+     "# Switch does not reach; true: it takes the console's clock instead, so the\n"
+     "# day's event can be played (and whatever else the game times runs on that\n"
+     "# clock). false: as without a connection, no events.",
+     CFG_BOOL, NULL, &g_cfg.events},
     /* [config] version = 1: the engine's row, last (CfgTable.version) */
 };
 

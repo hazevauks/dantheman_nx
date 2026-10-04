@@ -56,7 +56,10 @@ default), the rendering resolution, and swapping A and B.
 ## What is different from Android
 
 - Nothing online: no ads, purchases, leaderboards, cloud saves or sharing.
-  The game believes it has no network connection.
+  The game believes it has no network connection. What the game gives for
+  watching an ad is not available.
+- Weekly events run on the console's clock instead of Halfbrick's time
+  server (`[game] events` in `config.ini`).
 - Saves are kept in `sd:/switch/dantheman_nx/data/`.
 
 ## Reporting a problem

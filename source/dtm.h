@@ -52,6 +52,13 @@ void dtm_run_constructors(void); /* System.loadLibrary: the init array, JNI_OnLo
 
 /* dtm_firebase.c: FirebaseNS replaced, once the module is sealed as code */
 void dtm_firebase_patch(void);
+/* An engine function (Thumb or ARM, by its address's low bit) replaced at
+ * its first instruction by a jump to dst: 0 when patched. */
+int dtm_hook(uintptr_t fn, void *dst);
+
+/* dtm_time.c: the game's server time replaced by the console's clock, for
+ * the weekly events, once the module is sealed as code */
+void dtm_time_patch(void);
 
 /* dtm_locale.c: the console's language, or config.ini's ("pt", "BR", "pt-BR") */
 const char *dtm_language(void);

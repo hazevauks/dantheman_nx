@@ -99,6 +99,7 @@ int dtm_load_engine(void) {
   so_finalize(&g_mod_game);
   so_flush_caches(&g_mod_game);
   dtm_firebase_patch();
+  dtm_time_patch();
   return 0;
 }
 

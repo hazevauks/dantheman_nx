@@ -13,6 +13,7 @@ typedef struct {
   int log_jni;      /* [debug] log_java_calls */
   int log_input;    /* [debug] log_input */
   char language[12]; /* [game] language: "auto", or a code ("en", "pt-BR") */
+  int events;        /* [game] events: weekly events on the console's clock */
 } DcrConfig;
 
 /* Read config.ini (writing it with the defaults, or adding missing options,
