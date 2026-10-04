@@ -63,6 +63,19 @@ jobs:
         if: ${{ hashFiles('launcher/icon.jpg') != '' }}
         run: sh launcher/build.sh
 
+      # What a player copies to the SD card's root: the NRO in its folder.
+      - name: the SD card layout
+        if: ${{ hashFiles('launcher/dantheman_nx.nro') != '' }}
+        run: |
+          mkdir -p SD_CARD/switch/dantheman_nx
+          cp launcher/dantheman_nx.nro SD_CARD/switch/dantheman_nx/
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('SD_CARD/switch/dantheman_nx/dantheman_nx.nro') != '' }}
+        with:
+          name: dantheman_nx_sd
+          path: SD_CARD/
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:

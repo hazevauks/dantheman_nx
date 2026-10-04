@@ -85,9 +85,13 @@ H(h_package_version_short) {
 }
 H(h_model) { return jv_l(jni_str("Switch")); }
 H(h_manufacturer) { return jv_l(jni_str("Nintendo")); }
-H(h_country) { return jv_l(jni_str("US")); }
-/* Locale: language, then "-" country */
-H(h_locale) { return jv_l(jni_str("en-US")); }
+/* Locale.getDefault(): the console's, or config.ini's (dtm_locale.c) */
+H(h_country) { return jv_l(jni_str(dtm_country())); }
+/* language, then "-" country */
+H(h_locale) { return jv_l(jni_str(dtm_locale_tag())); }
+/* AudioManager: the music stream at full volume (the console's own volume
+ * applies after), no headphones reported */
+H(h_volume) { return jv_i(15); }
 /* /proc/meminfo's MemTotal, in kB: 2 GB */
 H(h_total_ram) { return jv_j(2 * 1024 * 1024); }
 /* DisplayMetrics.densityDpi: the 6.2" 720p screen */
@@ -131,6 +135,9 @@ const JMethodDef jni_method_defs[] = {
     {HB, "HasSystemFeature", "(" S ")Z", h_has_feature},
     {HB, "GetTVDevice", "()I", jni_h_zero},    /* not a television */
     {HB, "GetPhysicalScreenSizeTypeMask", "()I", h_screen_layout},
+    {HB, "GetMusicStreamMaxVolume", "()I", h_volume},
+    {HB, "GetMusicStreamVolume", "()I", h_volume},
+    {HB, "AreHeadphonesConnected", "()I", jni_h_zero},
     /* the Java answers true except on one maker's phones; false keeps the
      * engine on its own mixer and MortarAudioMixerOut (dtm_audio.c) */
     {GL, "SupportsOpenSL", "()Z", jni_h_false},

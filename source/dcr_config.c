@@ -20,6 +20,7 @@ static DcrConfig g_cfg = {
     .res_w = 1280,
     .res_h = 720,
     .boost = 1,
+    .language = "auto",
 };
 
 const DcrConfig *dcr_config(void) { return &g_cfg; }
@@ -48,6 +49,11 @@ static const CfgOpt k_opts[] = {
     {"debug", "log_input", "false",
      "Write every key and touch the game receives to debug.log (for bug reports).", CFG_BOOL, NULL,
      &g_cfg.log_input},
+    {"game", "language", "auto",
+     "The game's language. auto: the console's. Or a code: en, es, es-419, de, fr,\n"
+     "# it, ja, pt, ru, tr, zh-CN, zh-TW (a language the game does not have plays\n"
+     "# in English).",
+     CFG_TEXT, NULL, g_cfg.language, 0, 0, sizeof g_cfg.language},
     /* [config] version = 1: the engine's row, last (CfgTable.version) */
 };
 

@@ -20,9 +20,10 @@
  *                            step(); false closes the game. Then
  *                            gameRequestedQuit() -> the "quit?" dialog and
  *                            confirmQuitRequest(); gameRequestedRestart()
- *   Activity.onPause         NativeGameLib.onPause(), saveOnExit()
- *   Activity.onResume        the view resumes; the renderer then calls
- *                            NativeGameLib.onResume(...) / onResumeStep()
+ *   Activity.onPause         NativeGameLib.onPause(), saveOnExit(): here when
+ *                            the game closes
+ *   onWindowFocusChanged     NativeGameLib.onFocusLost() / onFocusRetrieved():
+ *                            here for HOME and sleep (see "lifecycle" below)
  *
  * The paths are Android's own: the runtime turns them into the game folder's
  * on the SD card (dcr_path.c), and the APK's into the player's own APK.
@@ -90,37 +91,41 @@ uint64_t dcr_boot_frames(void) { return dcr_gl_frames(); }
 
 /* --------------------------------------------------------- lifecycle */
 /* The runtime's applet lifecycle (rt_applet.c) calls these from the frame
- * loop's rt_applet_poll(): what MortarGameActivity's onPause / onResume did.
- * Focus lost: held keys and touches let go, the engine paused and its save
- * written (as the Java does at every onPause), the sound held. */
+ * loop's rt_applet_poll().
+ *
+ * Android has two ways of taking a game off the screen. Activity.onPause /
+ * onResume is the heavy one: the GLSurfaceView loses its GL context, so
+ * NativeGameLib.onResume unloads and reloads every texture and shader
+ * (DisplayManager_Android::UnloadAllResources / ReloadAllResources), over
+ * several frames of onResumeStep. onWindowFocusChanged is the light one, for
+ * when something covers the game and the context stays: NativeGameLib
+ * .onFocusLost / onFocusRetrieved. HOME and sleep on the Switch are the
+ * second kind: the context is never lost. So: held keys and touches let go,
+ * the engine told it lost the focus, the save written (as the Java does at
+ * every onPause: the game may be closed from the HOME menu), the sound
+ * held. */
 void port_focus_lost(void) {
   if (!g_engine_up)
     return;
   dtm_input_reset();
   if (g_n.onFocusLost)
     g_n.onFocusLost(ENV, CLS);
-  g_n.onPause(ENV, CLS);
   if (g_n.saveOnExit)
     g_n.saveOnExit(ENV, CLS);
   dtm_audio_pause(1);
 }
 
-/* The GL context was never lost here, so the engine has nothing to reload:
- * no startup texture (NULL, 0x0). It may still take some steps to resume
- * (onResumeStep), which the frame loop runs. */
-static int g_resuming;
 void port_focus_gained(void) {
   if (!g_engine_up)
     return;
   dtm_audio_pause(0);
-  g_n.onResume(ENV, CLS, NULL, 0, 0, 0);
   if (g_n.onFocusRetrieved)
     g_n.onFocusRetrieved(ENV, CLS);
-  g_resuming = 1;
 }
 
 /* HOME and sleep freeze the whole process; the runtime's clocks find each
- * freeze. What Android does around it: onPause, then onResume. */
+ * freeze (whether or not focus messages came). What Android does around it:
+ * the focus lost, then back. */
 void port_process_frozen(unsigned count) {
   debugPrintf("[game] the process was held (HOME menu or sleep; freeze %u)\n", count);
   port_focus_lost();
@@ -210,8 +215,8 @@ static void system_init(void) {
     g_n.InitJavaSoundManager(ENV, CLS);
   }
 
-  JObj *lang = jni_str("en"); /* Locale.getDefault().getLanguage() */
-  debugPrintf("[game] NativeGameLib.SystemInit(%d, %d, en)\n", g_w, g_h);
+  JObj *lang = jni_str(dtm_language()); /* Locale.getDefault().getLanguage() */
+  debugPrintf("[game] NativeGameLib.SystemInit(%d, %d, %s)\n", g_w, g_h, dtm_language());
   g_n.SystemInit(ENV, CLS, g_w, g_h, lang);
   jni_release(lang);
 }
@@ -241,23 +246,18 @@ int dtm_game_run(void) {
       svcSleepThread(50000000ll);
       continue;
     }
-    if (g_resuming) { /* the renderer's mIsResuming: no input, no step, until the engine is back */
-      if (!g_n.onResumeStep || !g_n.onResumeStep(ENV, CLS))
-        g_resuming = 0;
-    } else {
-      dtm_input_poll(g_w, g_h);
-      if (!g_n.step(ENV, CLS)) {
-        debugPrintf("[game] step() returned false: the game closes (shutdownApp)\n");
-        g_exit = 1;
-      } else if (g_n.gameRequestedQuit && g_n.gameRequestedQuit(ENV, CLS)) {
-        /* the Java asks "quit?" in a dialog; here Back on the title screen
-         * closes the game at once */
-        debugPrintf("[game] the game asked to quit: confirmed\n");
-        if (g_n.confirmQuitRequest)
-          g_n.confirmQuitRequest(ENV, CLS, 1);
-      } else if (g_n.gameRequestedRestart && g_n.gameRequestedRestart(ENV, CLS)) {
-        debugPrintf("[game] the game asked to restart: not done here, it goes on\n");
-      }
+    dtm_input_poll(g_w, g_h);
+    if (!g_n.step(ENV, CLS)) {
+      debugPrintf("[game] step() returned false: the game closes (shutdownApp)\n");
+      g_exit = 1;
+    } else if (g_n.gameRequestedQuit && g_n.gameRequestedQuit(ENV, CLS)) {
+      /* the Java asks "quit?" in a dialog; here Back on the title screen
+       * closes the game at once */
+      debugPrintf("[game] the game asked to quit: confirmed\n");
+      if (g_n.confirmQuitRequest)
+        g_n.confirmQuitRequest(ENV, CLS, 1);
+    } else if (g_n.gameRequestedRestart && g_n.gameRequestedRestart(ENV, CLS)) {
+      debugPrintf("[game] the game asked to restart: not done here, it goes on\n");
     }
     b_eglSwapBuffers(g_dpy, g_surf);
 

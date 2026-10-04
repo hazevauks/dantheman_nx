@@ -28,6 +28,12 @@
  * itself and hands PCM to its Java MortarAudioMixerOut, which dtm_audio.c
  * plays through audout. */
 
+/* ------------------------------------------------------------------ frames */
+/* The engine loads a level inside one frame (2-3 s on hardware), and the
+ * frame loop cannot poll during it: a watcher thread boosts the CPU for a
+ * frame that has run past 50 ms, until it ends. */
+#define RT_BOOST_WATCH_THREAD 1
+
 /* ------------------------------------------------------------------ input */
 #define RT_PAD_MAX_PLAYERS 2 /* the game has a two-player mode */
 

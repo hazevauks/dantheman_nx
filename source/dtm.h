@@ -53,6 +53,11 @@ void dtm_run_constructors(void); /* System.loadLibrary: the init array, JNI_OnLo
 /* dtm_firebase.c: FirebaseNS replaced, once the module is sealed as code */
 void dtm_firebase_patch(void);
 
+/* dtm_locale.c: the console's language, or config.ini's ("pt", "BR", "pt-BR") */
+const char *dtm_language(void);
+const char *dtm_country(void);
+const char *dtm_locale_tag(void);
+
 /* dtm_java.c */
 extern JObj *g_activity; /* MortarGameActivity */
 extern void *g_gamelib;  /* NativeGameLib's class object: the natives' second argument */

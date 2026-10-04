@@ -100,3 +100,30 @@ consulta) estão no `.gitignore`.
   falham e ele segue para o caminho certo. Só ruído.
 - `tools/thumbcalls.pl` lista o que uma função Thumb do motor chama e as
   constantes em volta — foi como o problema do áudio foi achado.
+
+## Revisão antes do lançamento
+
+- **HOME / repouso**: o port chamava `NativeGameLib.onResume`, que no Android
+  serve para contexto GL perdido e descarrega e recarrega todas as texturas
+  (`DisplayManager_Android::UnloadAllResources` / `ReloadAllResources`), e
+  ainda passava um array nulo. Trocado pelo caminho leve do Android para perda
+  de foco sem perda de contexto: `onFocusLost` + `saveOnExit` ao sair,
+  `onFocusRetrieved` ao voltar. **Ainda não testado no hardware.**
+- **Idioma**: lido do console (`set:sys`) e passado a `SystemInit` e ao
+  `HBSupport`; `[game] language` no config.ini força outro. O jogo tem en, es,
+  es-419, de, fr, it, ja, pt, ru, tr, zh (os dois). **Ainda não testado.**
+- **Carregamentos**: `RT_BOOST_WATCH_THREAD 1` acelera a CPU durante frames
+  longos (as trocas de fase levavam 2-3 s num frame só).
+- **Volume**: `GetMusicStreamVolume` / `MaxVolume` respondem 15 de 15.
+
+### Em aberto
+
+- **Portões de fase ("gate system")**: o jogo tem um sistema que libera fases
+  por anúncios assistidos ou por tempo de espera (`gate_system_mins_per_ad`,
+  `gate_system_max_ads_to_unlock`, `GameScreenStoryMap::InitGateSystemCountdownAssets`)
+  e uma compra "Premium" que os remove. Sem anúncios no Switch, é preciso jogar
+  além da primeira fase para saber se algum portão aparece e se a espera
+  funciona offline. Não foi mexido.
+- Analógicos via `motionEvent` (hoje o esquerdo vira D-pad).
+- 2 jogadores, modo dock (1080p) e toque não foram exercitados nos testes.
+- O ícone do launcher é arte do jogo fornecida pelo autor do port.
