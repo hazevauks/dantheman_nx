@@ -43,7 +43,6 @@ int b_remove(const char *path);
 int b_rename(const char *from, const char *to);
 int b_stat(const char *path, struct b_stat *out);
 
-#define TMP_SUFFIX ".jsontmp" /* the engine's temporary name: "<name>.json" + "tmp" */
 #define B_S_IFREG 0100000
 
 enum { M_OPEN, M_CLOSED, M_QUEUED, M_WRITING };
@@ -69,9 +68,20 @@ static struct {
   u64 bytes, longest_ms;
 } g_stats;
 
-static int ends_with(const char *s, const char *tail) {
-  const size_t a = strlen(s), b = strlen(tail);
-  return a >= b && !strcmp(s + a - b, tail);
+/* Files the port holds, in any state: while it is 0 the engine's calls go
+ * straight to the runtime (no path worked out twice, nothing locked). */
+static volatile int g_tracked;
+
+/* The engine's temporary name for a file it is replacing: the file's own
+ * name with "tmp" after its extension ("x.json" -> "x.jsontmp", the
+ * analytics queue's "x.dat" -> "x.dattmp"). */
+static int is_tmp_name(const char *path) {
+  const size_t n = strlen(path);
+  if (n < 6 || strcmp(path + n - 3, "tmp"))
+    return 0;
+  const char *slash = strrchr(path, '/');
+  const char *dot = strrchr(slash ? slash : path, '.');
+  return dot && dot > (slash ? slash + 1 : path) && dot + 1 < path + n - 3;
 }
 
 static void mem_free(Mem *m) {
@@ -86,6 +96,7 @@ static void unlink_file(Mem *m) {
   for (Mem **p = &g_files; *p; p = &(*p)->next)
     if (*p == m) {
       *p = m->next;
+      g_tracked--;
       return;
     }
 }
@@ -262,9 +273,12 @@ static Mem *find_unqueued(const char *real) {
 static void *saves_fopen(const char *path, const char *mode) {
   if (!g_started || !path || !mode)
     return b_fopen(path, mode);
+  const int tmp_write = mode[0] == 'w' && is_tmp_name(path);
+  if (!tmp_write && !g_tracked)
+    return b_fopen(path, mode);
   char buf[DCR_PATH_MAX];
   const char *real = dcr_translate_path(path, buf, sizeof buf);
-  if (mode[0] != 'w' || !ends_with(real, TMP_SUFFIX)) {
+  if (!tmp_write) {
     wait_for(real);
     return b_fopen(path, mode);
   }
@@ -285,6 +299,7 @@ static void *saves_fopen(const char *path, const char *mode) {
     old = NULL;
   m->next = g_files;
   g_files = m;
+  g_tracked++;
   mutexUnlock(&g_lock);
   if (old)
     mem_free(old);
@@ -292,7 +307,7 @@ static void *saves_fopen(const char *path, const char *mode) {
 }
 
 static int saves_rename(const char *from, const char *to) {
-  if (!g_started || !from || !to)
+  if (!g_started || !g_tracked || !from || !to)
     return b_rename(from, to);
   char b1[DCR_PATH_MAX], b2[DCR_PATH_MAX];
   const char *rfrom = dcr_translate_path(from, b1, sizeof b1);
@@ -313,7 +328,7 @@ static int saves_rename(const char *from, const char *to) {
 }
 
 static int saves_remove(const char *path) {
-  if (!g_started || !path)
+  if (!g_started || !g_tracked || !path)
     return b_remove(path);
   char buf[DCR_PATH_MAX], tmp[DCR_PATH_MAX + 8];
   const char *real = dcr_translate_path(path, buf, sizeof buf);
@@ -321,7 +336,7 @@ static int saves_remove(const char *path) {
   mutexLock(&g_lock);
   /* the old file, about to be replaced by its temporary one: the thread
    * removes it, just before the rename */
-  if (ends_with(tmp, TMP_SUFFIX) && find_unqueued(tmp)) {
+  if (find_unqueued(tmp)) {
     mutexUnlock(&g_lock);
     return 0;
   }
@@ -339,7 +354,7 @@ static int saves_remove(const char *path) {
 }
 
 static int saves_stat(const char *path, struct b_stat *out) {
-  if (!g_started || !path || !out)
+  if (!g_started || !g_tracked || !path || !out)
     return b_stat(path, out);
   char buf[DCR_PATH_MAX];
   const char *real = dcr_translate_path(path, buf, sizeof buf);

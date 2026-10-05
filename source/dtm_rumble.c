@@ -89,8 +89,17 @@ static int handles(HidVibrationDeviceHandle *h, int *n) {
   if (k < 0)
     return 0;
   const int count = k >= 3 ? 1 : 2;
-  if (!made[k])
-    made[k] = R_SUCCEEDED(hidInitializeVibrationDevices(cache[k], count, id, tags[k])) ? 1 : -1;
+  if (!made[k]) {
+    static const char *const names[5] = {"the console's Joy-Cons", "a Pro Controller", "a Joy-Con pair",
+                                         "a left Joy-Con", "a right Joy-Con"};
+    const Result rc = hidInitializeVibrationDevices(cache[k], count, id, tags[k]);
+    made[k] = R_SUCCEEDED(rc) ? 1 : -1;
+    bool permitted = true;
+    const Result prc = hidIsVibrationPermitted(&permitted);
+    debugPrintf("[rumble] %s (hid id %d): %d motor(s), set up 0x%x; the console's vibration setting is %s\n",
+                names[k], (int)id, count, (unsigned)rc,
+                R_FAILED(prc) ? "unknown" : permitted ? "on" : "OFF (System Settings > Controllers and Sensors)");
+  }
   if (made[k] < 0)
     return 0;
   memcpy(h, cache[k], sizeof(HidVibrationDeviceHandle) * (size_t)count);
@@ -101,8 +110,12 @@ static int handles(HidVibrationDeviceHandle *h, int *n) {
 static void drive(float strength) {
   HidVibrationDeviceHandle h[2];
   int n = 0;
-  if (!handles(h, &n))
+  if (!handles(h, &n)) {
+    static int told;
+    if (!told++)
+      debugPrintf("[rumble] no controller of player 1 that can rumble\n");
     return;
+  }
   HidVibrationValue v[2];
   for (int i = 0; i < 2; i++) {
     v[i].amp_low = strength;
@@ -110,7 +123,12 @@ static void drive(float strength) {
     v[i].amp_high = strength * 0.6f;
     v[i].freq_high = 320.0f;
   }
-  hidSendVibrationValues(h, v, n);
+  const Result rc = hidSendVibrationValues(h, v, n);
+  static int told;
+  if (strength > 0 && told < 3) {
+    told++;
+    debugPrintf("[rumble] strength %.2f sent to %d motor(s): 0x%x\n", (double)strength, n, (unsigned)rc);
+  }
 }
 
 static int g_on;

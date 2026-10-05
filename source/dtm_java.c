@@ -111,6 +111,9 @@ H(h_has_feature) {
 const JMethodDef jni_method_defs[] = {
     {"android/content/Context", "getPackageName", "()" S, h_getPackageName},
     {GA, "GetActivity", "()Landroid/app/Activity;", h_GetActivity},
+    /* Android 6's storage permission: granted, and no popup asking for it */
+    {GA, "CheckStoragePermission", "()Z", jni_h_true},
+    {GA, "CheckShowPopupStoragePermission", "()Z", jni_h_false},
     {GL, "GetSyncObj", "()Ljava/lang/Object;", h_GetSyncObj},
     {GL, "native_threadEntry", "(I)V", h_threadEntry},
     /* the device (InitDeviceProperties, SystemInit) */

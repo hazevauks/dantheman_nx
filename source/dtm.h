@@ -108,6 +108,12 @@ void dtm_rumble_patch(void);
 void dtm_rumble_frame(void);
 void dtm_rumble_stop(void);
 
+/* dtm_prof.c: what the engine was doing in a long frame, to the log (init
+ * on the main thread, from the function that runs the frame loop; frame at
+ * each frame's end) */
+void dtm_prof_init(void);
+void dtm_prof_frame(void);
+
 /* dtm_keyboard.c: com.halfbrick.mortar.SoftKeyboard as the system keyboard
  * (frame from the frame loop, after the engine's step) */
 void dtm_keyboard_frame(void);

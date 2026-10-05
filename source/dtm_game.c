@@ -238,6 +238,7 @@ int dtm_game_run(void) {
   g_n.GameInit(ENV, CLS);
   g_engine_up = 1;
   debugPrintf("[game] GameInit done: the engine is up\n");
+  dtm_prof_init();
   log_flush_ring();
 
   /* ---- GameManager.Render, and the UI thread's input, in turn ---- */
@@ -266,6 +267,7 @@ int dtm_game_run(void) {
     dtm_keyboard_frame(); /* the system keyboard, if the engine's frame asked for one */
     dtm_rumble_frame();
     b_eglSwapBuffers(g_dpy, g_surf);
+    dtm_prof_frame();
 
     const u64 now = armGetSystemTick();
     const unsigned long frames = (unsigned long)dcr_gl_frames();

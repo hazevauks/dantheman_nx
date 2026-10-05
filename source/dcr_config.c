@@ -72,6 +72,10 @@ static const CfgOpt k_opts[] = {
      "# the game does not stop for them. false: written inside the game's frame,\n"
      "# as on Android (try this if a save is ever lost).",
      CFG_BOOL, NULL, &g_cfg.background_saves},
+    {"debug", "profile_long_frames", "false",
+     "Write to debug.log what the game was doing in each frame that took 0.3 s or\n"
+     "# more (for bug reports about stutters). It costs a little of those frames.",
+     CFG_BOOL, NULL, &g_cfg.profile},
     /* [config] version = 1: the engine's row, last (CfgTable.version) */
 };
 
