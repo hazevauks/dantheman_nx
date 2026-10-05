@@ -45,13 +45,16 @@ To remove it, delete `sd:/switch/dantheman_nx/` and the folder under
 | − | back |
 | Touch screen | as on a phone (handheld) |
 
-A second controller joins as player 2.
+A second controller joins as player 2. Player 1's controller rumbles when
+the game shakes the screen. The custom character's name is typed with the
+system keyboard.
 
 ## Settings
 
 `sd:/switch/dantheman_nx/config.ini` is written on the first start. Each
 option is explained in the file; among them the language (the console's by
-default), the rendering resolution, and swapping A and B.
+default), the rendering resolution, swapping A and B, the rumble, the weekly
+events, and writing saves in the background.
 
 ## What is different from Android
 

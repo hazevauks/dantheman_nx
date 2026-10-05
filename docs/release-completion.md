@@ -11,16 +11,20 @@ Process:
 
 ## Ready for changelog
 
-All three below are **not yet tested on hardware**.
-
-- [ ] Saves no longer stop the game: they are written to the SD card in the
-      background (`[performance] background_saves` in config.ini turns it
-      off).
-- [ ] Rumble: player 1's controller rumbles when the game shakes the screen
-      (`[controls] rumble`).
-- [ ] The custom character's name can be typed, with the system keyboard.
+(nothing yet)
 
 ## Released
+
+### 0.1.8
+
+- Rumble: player 1's controller rumbles when the game shakes the screen (a
+  hit, something breaking, a boss's quake). `[controls] rumble` in
+  config.ini turns it off.
+- The custom character's name can be typed, with the system keyboard.
+- Saves are written to the SD card in the background instead of inside the
+  game's frame (`[performance] background_saves` turns it off).
+- `[debug] profile_long_frames`: for stutter reports, what the game was doing
+  in each frame of 0.3 s or more.
 
 ### 0.1.5
 
@@ -47,6 +51,9 @@ All three below are **not yet tested on hardware**.
 
 - [ ] Level gates: the game can ask for ads or a wait before a level; with
       no ads on a Switch, find out whether a gate appears offline.
+- [ ] Stutters: some frames still take 0.5 s and more (a save, a level
+      change). The time is the engine's own work on the main thread, not file
+      access; `profile_long_frames` is there to find out what.
 - [ ] Analogue stick values (today the left stick is the D-pad).
 - [ ] Two players, docked 1080p and touch need a longer play test.
 - [ ] Other versions of the APK than 1.2.1 are untested.
