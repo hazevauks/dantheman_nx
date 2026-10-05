@@ -1,174 +1,188 @@
-# dantheman_nx — notas do port
+# dantheman_nx — port notes
 
-Port de **Dan the Man 1.2.1** (com.halfbrick.dantheman, versionCode 1210006,
-armeabi-v7a) para Nintendo Switch sobre o runtime
-[android32](https://github.com/aks796/android32) (submódulo em `runtime/`,
-commit `50b352c`).
+A port of **Dan the Man 1.2.1** (com.halfbrick.dantheman, versionCode 1210006,
+armeabi-v7a) to the Nintendo Switch on the
+[android32](https://github.com/aks796/android32) runtime (a submodule at
+`runtime/`, commit `50b352c`).
 
-Estado: **roda no hardware** — entra no jogo, jogável até o primeiro checkpoint da
-fase 1, sai sem crash. Build no GitHub Actions (`.github/workflows/build.yml`).
+State: **runs on hardware** — playable, with sound, saves, weekly events,
+rumble and the system keyboard; it exits cleanly. Built in GitHub Actions
+(`.github/workflows/build.yml`).
 
-## O jogo
+## The game
 
 | | |
 | --- | --- |
-| Motor | Mortar, da própria Halfbrick (`libmortargame.so`, 13 MB, Thumb-2, gnustl embutido) |
-| Gráficos | OpenGL ES 2 puro (73 funções `gl*`, sem EGL: o Java criava o contexto) |
-| `DT_NEEDED` | libc, libm, liblog, libGLESv2, libandroid, libdl — só bibliotecas do sistema |
-| Imports | 297; os 224 não-GL são libc/pthread/sockets comuns |
-| Símbolos | **36 998 exportados** (C++ com nomes): dá para chamar/interceptar funções internas por nome |
-| Outras libs | `libjs.so`, `libadcolony.so` (anúncios), `libcrashlytics.so` — não são carregadas |
-| Assets | lidos pelo próprio motor de dentro do APK (`InitFileManager` recebe o caminho do APK) |
+| Engine | Mortar, Halfbrick's own (`libmortargame.so`, 13 MB, Thumb-2, gnustl linked in) |
+| Graphics | Plain OpenGL ES 2 (73 `gl*` functions, no EGL: the Java made the context) |
+| `DT_NEEDED` | libc, libm, liblog, libGLESv2, libandroid, libdl — system libraries only |
+| Imports | 297; the 224 that are not GL are ordinary libc/pthread/sockets |
+| Symbols | **36,998 exported** (C++, named): internal functions can be called or replaced by name |
+| Other libraries | `libjs.so`, `libadcolony.so` (ads), `libcrashlytics.so` — not loaded |
+| Assets | read by the engine itself from inside the APK (`InitFileManager` is given the APK's path) |
 
-O runtime já cobre todos os imports menos 12: sete entram como `PASSTHROUGH`
-em `tools/imports.cfg`, cinco têm shim em `source/dtm_libc.c`.
+The runtime already covers every import but 12: seven are `PASSTHROUGH`
+entries in `tools/imports.cfg`, five have a shim in `source/dtm_libc.c`.
 
-## Sequência de inicialização (do `GameManager` em classes2.dex)
+## Start-up sequence (from `GameManager` in classes2.dex)
 
-1. `System.loadLibrary("mortargame")` → construtores (1006 entradas no init array) + `JNI_OnLoad`
+1. `System.loadLibrary("mortargame")` → constructors (1006 entries in the init array) + `JNI_OnLoad`
 2. `NativeGameLib.InitDeviceProperties()`
-3. `InitFileManager(apk, filesDir + "/", cacheDir + "/", externalDir + "/", false)` — ordem confirmada pelos registradores
-4. `InitOpenSLSoundManager(AssetManager)`; se devolver `false`, `InitJavaSoundManager()`
-5. `SystemInit(largura, altura, idioma)`
+3. `InitFileManager(apk, filesDir + "/", cacheDir + "/", externalDir + "/", false)` — the order confirmed from the registers
+4. `InitOpenSLSoundManager(AssetManager)`; if it returns `false`, `InitJavaSoundManager()`
+5. `SystemInit(width, height, language)`
 6. `GameInit()`
-7. por frame: `keyEvent(...)` das teclas enfileiradas, depois `step()`
-   - `step() == false` → o jogo fecha
-   - `gameRequestedQuit() == true` → diálogo "sair?" → `confirmQuitRequest(bool)`
-   - `gameRequestedRestart() == true` → reinicia o app
-8. `onPause` da Activity → `NativeGameLib.onPause()` + `saveOnExit()`
+7. every frame: `keyEvent(...)` for the queued keys, then `step()`
+   - `step() == false` → the game closes
+   - `gameRequestedQuit() == true` → the "quit?" dialog → `confirmQuitRequest(bool)`
+   - `gameRequestedRestart() == true` → the app restarts
+8. the Activity's `onPause` → `NativeGameLib.onPause()` + `saveOnExit()`
 
-Assinaturas dos nativos: `perl tools/dexinfo.pl <apk>/classes2.dex '^Lcom/halfbrick/' native`.
+The natives' signatures: `perl tools/dexinfo.pl <apk>/classes2.dex '^Lcom/halfbrick/' native`.
 
-## Áudio
+## Audio
 
-O motor mixa sozinho (`Mortar::Audio::AudioMixer`) e tem duas saídas:
-`MAMAudioThread_AndroidSLES` (OpenSL ES) e `MAMAudioThread_AndroidJava`, que
-entrega PCM à classe Java `MortarAudioMixerOut` (um `AudioTrack` estéreo de
-16 bits). O port usa a segunda: OpenSL fica recusado (padrão do runtime) e
-`dtm_audio.c` responde `Create` / `GetNativeSampleRate` (48 kHz) / `Init` /
-`WriteData` mandando os blocos para o audout.
+The engine mixes by itself (`Mortar::Audio::AudioMixer`) and has two outputs:
+`MAMAudioThread_AndroidSLES` (OpenSL ES) and `MAMAudioThread_AndroidJava`,
+which hands PCM to the Java class `MortarAudioMixerOut` (a 16-bit stereo
+`AudioTrack`). The port uses the second: OpenSL stays refused (the runtime's
+default) and `dtm_audio.c` answers `Create` / `GetNativeSampleRate` (48 kHz) /
+`Init` / `WriteData`, sending the blocks to audout.
 
-Confirmado no hardware: `NativeGameLib.SupportsOpenSL()` responde `false`, o motor
-cria `MAMAudioThread_AndroidJava` e escreve 2004 frames estéreo por vez.
+Confirmed on hardware: `NativeGameLib.SupportsOpenSL()` answers `false`, the
+engine creates `MAMAudioThread_AndroidJava` and writes 2004 stereo frames at a
+time.
 
-**Atenção:** `Init(rate)` devolve a própria taxa recebida, não um tamanho de buffer.
-O motor usa esse valor como taxa de saída e reamostra a mixagem (44,1 kHz interna)
-para ela; devolver outro número acelera e distorce o som.
+**Careful:** `Init(rate)` returns the rate it was given, not a buffer size.
+The engine takes that value as the output rate and resamples its mix (44.1 kHz
+internally) to it; any other number speeds the sound up and distorts it.
 
-## Entrada
+## Input
 
-- Teclas: `keyEvent(keyCode, down, flag, deviceId)` com os `KEYCODE_BUTTON_*` / `DPAD_*` do Android.
-- Toque: `touchEvent(action, tempo, ponteiro, x/largura, y/altura, pressão, tamanho)` — coordenadas normalizadas 0..1.
-- Controles: `onGameControllerAttach(deviceId, nome)` / `Detach(deviceId)`.
-- Analógicos: `motionEvent(deviceId, eixo, x, y)` — **semântica dos eixos ainda não decodificada**; por ora o analógico esquerdo vira D-pad.
+- Keys: `keyEvent(keyCode, down, flag, deviceId)` with Android's `KEYCODE_BUTTON_*` / `DPAD_*`.
+- Touch: `touchEvent(action, time, pointer, x/width, y/height, pressure, size)` — coordinates normalised to 0..1.
+- Controllers: `onGameControllerAttach(deviceId, name)` / `Detach(deviceId)`.
+- Sticks: `motionEvent(deviceId, axis, x, y)` — **the axes' meaning is not decoded yet**; for now the left stick is the D-pad.
 
-## Pendências
+## To do
 
-- [x] Build no GitHub Actions: libnx32 e mesa32 dos releases, `source/imports.c` gerado a cada build (224 imports, 0 faltando), NSP e NRO como artefato `dantheman_nx`
-- [ ] Primeiro teste no hardware: mandar `debug.log` e `crash.log`; a lista de métodos Java "unhandled" do log é a lista de tarefas de `dtm_java.c`
-- [ ] Idioma: hoje fixo em `"en"`; ler o idioma do console
-- [x] Botões por posição: B pula/confirma, Y bate (`swap_a_b` no config.ini troca A e B)
-- [ ] Analógicos via `motionEvent`
-- [ ] Conferir se o save persiste entre execuções (`KeyStore` agora grava em `data/keystore.txt`)
+- [x] Build in GitHub Actions: libnx32 and mesa32 from their releases, `source/imports.c` generated at every build (224 imports, none missing), the NSP and NRO as the `dantheman_nx` artifact
+- [x] First hardware test; the log's list of "unhandled" Java methods is `dtm_java.c`'s to-do list
+- [x] Language: read from the console
+- [x] Buttons by position: B jumps and confirms, Y hits (`swap_a_b` in config.ini swaps A and B)
+- [ ] Sticks through `motionEvent`
+- [x] The save persists between runs (`KeyStore` is kept in `data/keystore.txt`)
 
-## Ferramentas (`tools/`)
+## Tools (`tools/`)
 
-Sem binutils nem Python na máquina, dois scripts Perl fazem a análise:
+With no binutils and no Python on the machine, Perl scripts do the analysis:
 
-- `elfinfo.pl <lib.so> [needed|exports|imports|jni|all]` — no lugar do `readelf`
-- `dexinfo.pl <classes.dex> <regex de classe> [native | code [regex de método]]` — no lugar do `dexdump`
-- `imports_needed.txt` — os símbolos que o jogo importa (gerado com `elfinfo.pl`; nomes de símbolos, não conteúdo do jogo)
+- `elfinfo.pl <lib.so> [needed|exports|imports|jni|all]` — in place of `readelf`
+- `dexinfo.pl <classes.dex> <class regex> [native | code [method regex]]` — in place of `dexdump`
+- `thumbcalls.pl <lib.so> <symbol regex>` — what a Thumb function of the engine calls, and the constants around the calls
+- `thumbxref.pl <lib.so> <symbol regex>` — who calls a function of the engine (directly or through the PLT)
+- `imports_needed.txt` — the symbols the game imports (made with `elfinfo.pl`; symbol names, not game content)
 
-## O que nunca vai para o repositório
+## What never goes into the repository
 
-O APK, a pasta extraída dele e `_refs/` (clones de outros ports só para
-consulta) estão no `.gitignore`.
+The APK, the folder extracted from it and `_refs/` (clones of other ports,
+for reading only) are in `.gitignore`.
 
-## Achados dos testes no hardware
+## Findings from the hardware tests
 
-- **Firebase**: o SDK aborta se não carrega suas classes Java. O jogo só o usa
-  pela camada `FirebaseNS`, cujas 18 funções são substituídas por stubs
-  (`dtm_firebase.c`); os valores de remote config são os padrões que o jogo
-  passa a `FirebaseNS::Init` (14 pares chave/valor, layout confirmado no log).
-- **Threads do motor**: cada pthread do motor chama
-  `NativeGameLib.native_threadEntry(int)` via JNI; o handler repassa ao nativo
-  registrado em `JNI_OnLoad`. Sem isso nenhuma thread do motor trabalha.
-- **`HBSupport`**: consultas de dispositivo respondidas em `dtm_java.c`
-  (IDs constantes, Android 23, 240 dpi, multitoque, não é TV nem tablet).
-- **Caminhos `data/app/…/base.apk/<arquivo>`** no log: o motor procura cada
-  arquivo também num "mount" do APK com caminho relativo; essas tentativas
-  falham e ele segue para o caminho certo. Só ruído.
-- `tools/thumbcalls.pl` lista o que uma função Thumb do motor chama e as
-  constantes em volta — foi como o problema do áudio foi achado.
+- **Firebase**: the SDK aborts when it cannot load its Java classes. The game
+  only uses it through its `FirebaseNS` layer, whose 18 functions are replaced
+  by stubs (`dtm_firebase.c`); remote-config values are the defaults the game
+  hands to `FirebaseNS::Init` (14 key/value pairs, the layout confirmed in the
+  log).
+- **The engine's threads**: each of the engine's pthreads calls
+  `NativeGameLib.native_threadEntry(int)` through JNI; the handler passes it
+  on to the native registered in `JNI_OnLoad`. Without that no engine thread
+  does anything.
+- **`HBSupport`**: the device queries are answered in `dtm_java.c` (constant
+  IDs, Android 23, 240 dpi, multi-touch, neither a TV nor a tablet).
+- **`data/app/…/base.apk/<file>` paths** in the log: the engine also looks for
+  each file in a "mount" of the APK with a relative path; those attempts fail
+  and it goes on to the right path. Noise only.
+- `tools/thumbcalls.pl` is how the audio problem was found.
 
-## Revisão antes do lançamento
+## Review before the first release
 
-- **HOME / repouso**: o port chamava `NativeGameLib.onResume`, que no Android
-  serve para contexto GL perdido e descarrega e recarrega todas as texturas
-  (`DisplayManager_Android::UnloadAllResources` / `ReloadAllResources`), e
-  ainda passava um array nulo. Trocado pelo caminho leve do Android para perda
-  de foco sem perda de contexto: `onFocusLost` + `saveOnExit` ao sair,
-  `onFocusRetrieved` ao voltar. **Ainda não testado no hardware.**
-- **Idioma**: lido do console (`set:sys`) e passado a `SystemInit` e ao
-  `HBSupport`; `[game] language` no config.ini força outro. O jogo tem en, es,
-  es-419, de, fr, it, ja, pt, ru, tr, zh (os dois). **Ainda não testado.**
-- **Carregamentos**: `RT_BOOST_WATCH_THREAD 1` acelera a CPU durante frames
-  longos (as trocas de fase levavam 2-3 s num frame só).
-- **Volume**: `GetMusicStreamVolume` / `MaxVolume` respondem 15 de 15.
+- **HOME / sleep**: the port called `NativeGameLib.onResume`, which on Android
+  is for a lost GL context and unloads and reloads every texture
+  (`DisplayManager_Android::UnloadAllResources` / `ReloadAllResources`), and
+  it passed a null array besides. Replaced by Android's light path for a lost
+  focus with the context kept: `onFocusLost` + `saveOnExit` on the way out,
+  `onFocusRetrieved` on the way back.
+- **Language**: read from the console (`set:sys`) and passed to `SystemInit`
+  and to `HBSupport`; `[game] language` in config.ini forces another. The game
+  has en, es, es-419, de, fr, it, ja, pt, ru, tr, zh (both scripts).
+- **Loading**: `RT_BOOST_WATCH_THREAD 1` boosts the CPU during long frames
+  (a level change took 2-3 s in a single frame).
+- **Volume**: `GetMusicStreamVolume` / `MaxVolume` answer 15 of 15.
 
-### Em aberto
+### Open
 
-- **Portões de fase ("gate system")**: o jogo tem um sistema que libera fases
-  por anúncios assistidos ou por tempo de espera (`gate_system_mins_per_ad`,
-  `gate_system_max_ads_to_unlock`, `GameScreenStoryMap::InitGateSystemCountdownAssets`)
-  e uma compra "Premium" que os remove. Sem anúncios no Switch, é preciso jogar
-  além da primeira fase para saber se algum portão aparece e se a espera
-  funciona offline. Não foi mexido.
-- Analógicos via `motionEvent` (hoje o esquerdo vira D-pad).
-- 2 jogadores, modo dock (1080p) e toque não foram exercitados nos testes.
-- O ícone do launcher é arte do jogo fornecida pelo autor do port.
+- **Level gates (the "gate system")**: the game has a system that unlocks
+  levels by ads watched or by a wait (`gate_system_mins_per_ad`,
+  `gate_system_max_ads_to_unlock`,
+  `GameScreenStoryMap::InitGateSystemCountdownAssets`) and a "Premium"
+  purchase that removes it. With the weekly-events clock the wait runs on the
+  console's clock.
+- Sticks through `motionEvent` (today the left one is the D-pad).
+- Two players, docked mode (1080p) and touch have had little testing.
+- The launcher's icon is the game's artwork, supplied by the port's author.
 
-## Eventos semanais (relógio do console)
+## Weekly events (the console's clock)
 
-- Os eventos vêm de um calendário dentro do APK (`definitions/weekly_events`,
-  no XML binário "bxml" da Halfbrick), sem datas absolutas: o evento do dia é
-  calculado da data corrente (`GameWeeklyEvents::GetCalendarCurrentDay`).
-- O que bloqueava era `Game::IsServerTimeReliable`: a cada frame
-  `Game::UpdateServerTime` pergunta ao `ITimeService` do Mortar a hora e se ela
-  é confiável, e guarda no objeto `Game` (hora em +0x170, "confiável" em
-  +0x184). Sem servidor, nunca é confiável.
-- `dtm_time.c` substitui `Game::UpdateServerTime` pelo ramo "confiável" com o
-  relógio do console (`Mortar::Timing::GetSecondsSinceEpoch`). Só aplica se o
-  código da função for o da 1.2.1 de onde os offsets foram lidos.
-- A mesma verificação é usada em outros pontos (32 chamadores): o portão por
-  tempo do mapa (`GameScreenStoryMap::IsLastLevelLockedByTime`), ofertas
-  (`GameOffers`), notificações, a loja. Com a hora confiável esses caminhos
-  passam a rodar no relógio do console. Testado no hardware pelo autor do
-  port (build 202610041409): os eventos funcionam; lançado na 0.1.5.
-- O botão de vídeo da tela de evento (`AdButtonPressedHandler`) também exige
-  rede e anúncio: continua indisponível, de propósito. Recompensas por
-  anúncio não são simuladas: é como a Halfbrick monetiza o jogo.
-- `tools/thumbxref.pl` lista quem chama uma função do motor (direto ou pela
-  PLT).
+- The events come from a calendar inside the APK
+  (`definitions/weekly_events`, in Halfbrick's binary XML, "bxml"), with no
+  absolute dates: the day's event is worked out from the current date
+  (`GameWeeklyEvents::GetCalendarCurrentDay`).
+- What blocked them was `Game::IsServerTimeReliable`: every frame
+  `Game::UpdateServerTime` asks Mortar's `ITimeService` for the time and
+  whether it is reliable, and keeps both in the `Game` object (the time at
+  +0x170, "reliable" at +0x184). With no server it is never reliable.
+- `dtm_time.c` replaces `Game::UpdateServerTime` by its "reliable" branch with
+  the console's clock (`Mortar::Timing::GetSecondsSinceEpoch`). It is applied
+  only when the function's code is the 1.2.1 code the offsets were read from.
+- The same check is made elsewhere (32 callers): the story map's time gate
+  (`GameScreenStoryMap::IsLastLevelLockedByTime`), the offers (`GameOffers`),
+  notifications, the store. With a reliable time those paths run on the
+  console's clock. Tested on hardware by the port's author (build
+  202610041409): the events work; released in 0.1.5.
+- The event screen's video button (`AdButtonPressedHandler`) also needs a
+  network and an ad: it stays unavailable, on purpose. Ad rewards are not
+  simulated in the public port.
 
-## Gravação em segundo plano, vibração e teclado
+## Saves in the background, rumble and the keyboard
 
-Os três ainda **não foram testados no hardware**.
+Released in 0.1.8. On hardware: the keyboard works, the rumble is felt, and
+the log shows the saves written by the port's thread (41 files in one
+session, none failed, nothing had to wait).
 
-- **Saves (`dtm_saves.c`)**: `Mortar::IFile_Direct::Close` grava cada arquivo
-  como `<nome>.jsontmp`, apaga o `.json` antigo e renomeia. No cartão são
-  quatro operações lentas por arquivo (só criar leva 20–80 ms), dentro de um
-  frame. O port guarda o temporário na memória e uma thread faz as mesmas
-  operações na mesma ordem. `fopen`, `remove`, `rename` e `stat` do motor
-  passam pelo `port_imports` do runtime; quem pedir um arquivo ainda na fila
-  espera a thread. `dtm_saves_flush()` ao perder o foco e ao sair.
-- **Vibração (`dtm_rumble.c`)**: o jogo nunca pede vibração ao Android. O
-  gatilho é `GameCamera::Shake(amount, seconds)` (dano, objetos quebrando,
-  terremotos dos chefes), reimplementada a partir do código da 1.2.1 (campos
-  +0x58, +0x5c, +0x60 da câmera) e seguida do rumble. As oito primeiras
-  chamadas vão para o log, para calibrar a força.
-- **Teclado (`dtm_keyboard.c`)**: só existe um campo de texto, o nome do
-  personagem personalizado. `SoftKeyboard.ShowKeyboard` abre o teclado do
-  sistema depois do frame; o resultado volta por
-  `native_keyboardUpdateText` + `native_keyboardProcessDone` (ou
-  `…Cancelled`).
+- **Saves (`dtm_saves.c`)**: `Mortar::IFile_Direct::Close` writes each file as
+  `<name>.<ext>tmp`, removes the old file and renames. On the card that is
+  four slow operations a file (creating it alone takes 20–80 ms), inside one
+  frame. The port keeps the temporary file in memory and a thread does the
+  same operations in the same order. The engine's `fopen`, `remove`, `rename`
+  and `stat` go through the runtime's `port_imports`; whoever asks for a file
+  still in the queue waits for the thread. `dtm_saves_flush()` when the focus
+  is lost and on exit.
+- **Rumble (`dtm_rumble.c`)**: the game never asks Android to vibrate. The
+  trigger is `GameCamera::Shake(amount, seconds)` (damage, things breaking,
+  the bosses' quakes), reimplemented from the 1.2.1 code (the camera's +0x58,
+  +0x5c, +0x60) and followed by the rumble. Seen in a test: amounts of 5 and
+  10, for 0.5 to 0.75 s.
+- **Keyboard (`dtm_keyboard.c`)**: there is one text field, the custom
+  character's name. `SoftKeyboard.ShowKeyboard` opens the system keyboard
+  after the frame; the result goes back through `native_keyboardUpdateText` +
+  `native_keyboardProcessDone` (or `…Cancelled`).
+
+### Stutters that remain
+
+Some frames still take 0.5 s and more (a save, a level change). The log's CPU
+figures put almost all of that time on the main thread, not in file access:
+it is the engine's own work. `[debug] profile_long_frames` (`dtm_prof.c`)
+samples the main thread during such a frame and writes the engine functions
+it was in to the log; no such log has been looked at yet.
