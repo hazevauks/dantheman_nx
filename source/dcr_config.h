@@ -17,6 +17,7 @@ typedef struct {
   int rumble;        /* [controls] rumble */
   int background_saves; /* [performance] background_saves */
   int profile;       /* [debug] profile_long_frames */
+  int ad_rewards;    /* [personal] ad_rewards (personal build only: dtm_ads.c) */
 } DcrConfig;
 
 /* Read config.ini (writing it with the defaults, or adding missing options,

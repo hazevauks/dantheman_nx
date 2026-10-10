@@ -60,6 +60,9 @@ int dtm_hook(uintptr_t fn, void *dst);
  * the weekly events, once the module is sealed as code */
 void dtm_time_patch(void);
 
+/* dtm_ads.c (personal build only): the game's ad rewards without the ad */
+void dtm_ads_patch(void);
+
 /* dtm_locale.c: the console's language, or config.ini's ("pt", "BR", "pt-BR") */
 const char *dtm_language(void);
 const char *dtm_country(void);
