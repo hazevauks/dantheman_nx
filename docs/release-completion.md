@@ -15,6 +15,14 @@ Process:
 
 ## Released
 
+### 0.2.0
+
+- Ad rewards without the ad: `[game] ad_rewards = true` in config.ini gives
+  what the game gives for watching an ad (the wait before a level, the
+  continue, the checkpoint, the free gold) without the ad, which a Switch
+  cannot show. Off by default; it needs `[game] events = true`. Purchases
+  are not affected. **Not yet tested on hardware.**
+
 ### 0.1.8
 
 - Rumble: player 1's controller rumbles when the game shakes the screen (a
@@ -51,6 +59,9 @@ Process:
 
 - [ ] Level gates: the game can ask for ads or a wait before a level; with
       no ads on a Switch, find out whether a gate appears offline.
+- [ ] Ad rewards (`[game] ad_rewards`): a hardware test of each video button
+      (the level wait, the continue, the checkpoint, the free gold, the
+      event screen).
 - [ ] Stutters: some frames still take 0.5 s and more (a save, a level
       change). The time is the engine's own work on the main thread, not file
       access; `profile_long_frames` is there to find out what.

@@ -54,13 +54,16 @@ system keyboard.
 `sd:/switch/dantheman_nx/config.ini` is written on the first start. Each
 option is explained in the file; among them the language (the console's by
 default), the rendering resolution, swapping A and B, the rumble, the weekly
-events, and writing saves in the background.
+events, the ad rewards, and writing saves in the background.
 
 ## What is different from Android
 
 - Nothing online: no ads, purchases, leaderboards, cloud saves or sharing.
-  The game believes it has no network connection. What the game gives for
-  watching an ad is not available.
+  The game believes it has no network connection.
+- What the game gives for watching an ad (the wait before a level, the
+  continue, the checkpoint, the free gold) is not available by default: a
+  Switch cannot show the ad. `[game] ad_rewards = true` in `config.ini` gives
+  the reward without it. Purchases stay off either way.
 - Weekly events run on the console's clock instead of Halfbrick's time
   server (`[game] events` in `config.ini`).
 - Saves are kept in `sd:/switch/dantheman_nx/data/`.
