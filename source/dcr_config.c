@@ -76,11 +76,12 @@ static const CfgOpt k_opts[] = {
      "Write to debug.log what the game was doing in each frame that took 0.3 s or\n"
      "# more (for bug reports about stutters). It costs a little of those frames.",
      CFG_BOOL, NULL, &g_cfg.profile},
-    {"personal", "ad_rewards", "false",
-     "PERSONAL BUILD ONLY. true: what the game gives for watching an ad (the wait\n"
-     "# before a level, the continue, the checkpoint, the free gold) is given\n"
-     "# without the ad, which a Switch cannot show. Purchases are not affected.\n"
-     "# Needs [game] events = true.",
+    {"game", "ad_rewards", "false",
+     "What the game gives for watching an ad (the wait before a level, the\n"
+     "# continue, the checkpoint, the free gold). A Switch cannot show the ad;\n"
+     "# true: the reward is given without it. false: as without a connection,\n"
+     "# those buttons are unavailable. Purchases are not affected. Needs\n"
+     "# [game] events = true.",
      CFG_BOOL, NULL, &g_cfg.ad_rewards},
     /* [config] version = 1: the engine's row, last (CfgTable.version) */
 };

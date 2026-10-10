@@ -1,10 +1,10 @@
-/* dtm_ads.c -- PERSONAL BUILD ONLY: the rewards the game gives for watching
- * an ad, without the ad.
+/* dtm_ads.c -- the rewards the game gives for watching an ad, without the
+ * ad.
  *
- * This file is not part of the public port. The game pays for itself with
- * ads; a Switch can show none, and the port's releases leave the rewards
- * unavailable. This is the owner's own build, off by default
- * ([personal] ad_rewards in config.ini).
+ * The game pays for itself with ads; a Switch can show none, and up to 0.1.8
+ * the port left the rewards unavailable. It began as the author's own build
+ * and is in the releases from 0.2.0, off by default ([game] ad_rewards in
+ * config.ini).
  *
  * What the game does for a rewarded video (the wait before a level on the
  * story map, the continue, the checkpoint before a boss, the free gold):
@@ -129,7 +129,7 @@ void dtm_ads_patch(void) {
     return;
   }
   const int a = dtm_hook(prepared, ad_prepared), b = dtm_hook(reach, reachability);
-  debugPrintf("[ads] PERSONAL BUILD: ad rewards without the ad (%s; %u of %u video buttons; "
+  debugPrintf("[ads] ad rewards without the ad (%s; %u of %u video buttons; "
               "purchases untouched)\n",
               a == 0 && b == 0 ? "on" : "partly: a patch failed", g_nranges, (unsigned)NCALLERS);
 }

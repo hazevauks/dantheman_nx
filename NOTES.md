@@ -128,7 +128,8 @@ for reading only) are in `.gitignore`.
   `gate_system_max_ads_to_unlock`,
   `GameScreenStoryMap::InitGateSystemCountdownAssets`) and a "Premium"
   purchase that removes it. With the weekly-events clock the wait runs on the
-  console's clock.
+  console's clock; with `[game] ad_rewards` the "watch an ad" way out of the
+  wait answers too.
 - Sticks through `motionEvent` (today the left one is the D-pad).
 - Two players, docked mode (1080p) and touch have had little testing.
 - The launcher's icon is the game's artwork, supplied by the port's author.
@@ -152,8 +153,33 @@ for reading only) are in `.gitignore`.
   console's clock. Tested on hardware by the port's author (build
   202610041409): the events work; released in 0.1.5.
 - The event screen's video button (`AdButtonPressedHandler`) also needs a
-  network and an ad: it stays unavailable, on purpose. Ad rewards are not
-  simulated in the public port.
+  network and an ad: it stays unavailable unless `[game] ad_rewards` is
+  turned on (below).
+
+## Ad rewards without the ad (`dtm_ads.c`)
+
+`[game] ad_rewards`, off by default. Up to 0.1.8 the port left the game's
+rewarded videos unavailable; this began as the author's own build (the
+`personal` branch) and was merged for 0.2.0. **Not tested on hardware yet.**
+
+- What a rewarded video is in the game: the wait before a level on the story
+  map, the continue, the checkpoint before a boss, the free gold. The
+  screen's video button is offered when `GameAdvertising::AdPrepared` says an
+  ad is loaded; pressing it, the handler asks `Mortar::Reachability` for a
+  connection and calls `GameAdvertising::ShowAd` with a delegate; with no
+  reliable time or no connection `ShowAd` ends at once through
+  `iShowCompleted(false, ...)`, "not watched".
+- Three changes, all in the game's own layer: `AdPrepared` answers yes;
+  `Reachability` answers "connected" only to the video buttons' own functions
+  (11 of them, told by the address the call returns to); and one byte in
+  `ShowAd` (+0x18a, `movs r1, #0` → `#1`) makes its no-connection ending
+  "watched". The byte is patched only where the code is the 1.2.1 code.
+- The engine is never told it is online: account, analytics and store code
+  stay offline. `GameStore::PurchaseItem` is not among the callers answered
+  "connected": purchases stay impossible. Nor are the full-screen ads between
+  levels, which reward nothing.
+- It needs `[game] events = true`: `ShowAd` asks for a reliable time as well
+  as a connection, and that is the weekly events' clock.
 
 ## Saves in the background, rumble and the keyboard
 
